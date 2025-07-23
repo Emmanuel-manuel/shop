@@ -1,0 +1,1 @@
+This Android App was designed for mobile devices of Android version 6.0 and above
