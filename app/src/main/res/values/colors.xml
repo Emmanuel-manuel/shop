@@ -7,6 +7,17 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="light_grey">#CCCCCC</color>
+    <color name="lavender">#B692f7</color>
+    <color name="red">#912A0B</color>
+    <color name="green">#39CC62</color>
 
+
+    <color name="lightgrey">#CCCCCC</color>
     <color name="blue">#1976D2</color>
+    <color name="officialBlue">#046997</color>
+
+    <color name="background">#F5F5F5</color>
+    <color name="card_background">#EDEDED</color>
+
 </resources>
