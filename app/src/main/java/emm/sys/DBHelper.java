@@ -60,14 +60,31 @@ public class DBHelper extends SQLiteOpenHelper {
             return false;
     }
 
-    public Boolean checkRolePassword(String role, String password) {
-        SQLiteDatabase LoginDetails = this.getWritableDatabase();
-        Cursor cursor = LoginDetails.rawQuery(
-                "SELECT * FROM users WHERE role = ? AND password = ?",
+//    public Boolean checkRolePassword(String role, String password) {
+//        SQLiteDatabase LoginDetails = this.getWritableDatabase();
+//        Cursor cursor = LoginDetails.rawQuery(
+//                "SELECT * FROM users WHERE role = ? AND password = ?",
+//                new String[]{role, password}
+//        );
+//        boolean exists = cursor.getCount() > 0;
+//        cursor.close();
+//        return exists;
+//    }
+
+    //a method to get email by role and password:
+    public String getEmailByRolePassword(String role, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String email = null;
+
+        Cursor cursor = db.rawQuery(
+                "SELECT email FROM users WHERE role = ? AND password = ? LIMIT 1",
                 new String[]{role, password}
         );
-        boolean exists = cursor.getCount() > 0;
+
+        if (cursor.moveToFirst()) {
+            email = cursor.getString(0);
+        }
         cursor.close();
-        return exists;
+        return email;
     }
 }

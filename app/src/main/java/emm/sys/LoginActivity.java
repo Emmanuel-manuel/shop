@@ -65,16 +65,31 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             // Verify credentials
-            if (DB.checkRolePassword(selectedRole, password)) {
+//            if (DB.checkRolePassword(selectedRole, password)) {
+//                Toast.makeText(LoginActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
+//
+//                // Pass role to landing page
+//                Intent intent = new Intent(LoginActivity.this, LandingPageActivity.class);
+//                intent.putExtra("USER_ROLE", selectedRole);
+//                startActivity(intent);
+//                finish();
+//            } else {
+//                Toast.makeText(LoginActivity.this, "Wrong Password", Toast.LENGTH_SHORT).show();
+//            }
+
+            // Get email using the new method
+            String email = DB.getEmailByRolePassword(selectedRole, password);
+
+            if (email != null) {
                 Toast.makeText(LoginActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
 
-                // Pass role to landing page
+                // Pass email to landing page
                 Intent intent = new Intent(LoginActivity.this, LandingPageActivity.class);
-                intent.putExtra("USER_ROLE", selectedRole);
+                intent.putExtra("USER_EMAIL", email);
                 startActivity(intent);
                 finish();
             } else {
-                Toast.makeText(LoginActivity.this, "Wrong Password", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
             }
         });
 
