@@ -4,16 +4,16 @@
     android:layout_height="170dp"
     android:padding="5dp"
     android:orientation="vertical"
-    android:background="@drawable/mku_banner"
+    android:background="@drawable/shop_banner"
     android:gravity="bottom">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Student Progression App"
-        android:textColor="#fff"
+        android:text="BLESSED SHOP APP"
+        android:textColor="@color/black"
         android:textAllCaps="true"
-        android:textSize="18sp"
+        android:textSize="28sp"
         android:textStyle="bold"
         />
 
@@ -21,9 +21,9 @@
         android:id="@+id/nav_header_email"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="pnjenga@mku.ac.ke"
+        android:text="emmanuelsystems5@gmail.com"
         android:textSize="18sp"
-        android:textColor="#fff"
+        android:textColor="@color/white"
         />
 
 </LinearLayout>

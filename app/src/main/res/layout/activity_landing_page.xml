@@ -45,14 +45,14 @@
                     <!-- Time greeting on the Left-->
                     <TextView
                         android:id="@+id/welcomeTime"
-                        android:layout_width="0dp"
+                        android:layout_width="16dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:padding="3dp"
                         android:text="Good Morning"
                         android:textColor="@color/black"
                         android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:padding="3dp"/>
+                        android:textStyle="bold" />
 
                     <!-- Email welcome on the Right-->
                     <TextView

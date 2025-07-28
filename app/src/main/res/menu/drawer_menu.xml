@@ -6,17 +6,12 @@
             android:icon="@drawable/ic_baseline_home_24"
             android:title="Home"
             />
-        <item android:id="@+id/study_room"
-            android:icon="@drawable/ic_baseline_study_room_24"
-            android:title="Study Room"
+        <item android:id="@+id/receive_inventory"
+            android:icon="@drawable/ic_baseline_inventory_24"
+            android:title="Receive Inventory"
             />
 
-        <!--
-        <item android:id="@+id/progress"
-            android:icon="@drawable/ic_baseline_study_room_24"
-            android:title="Progress"
-            />
-            -->
+
 
         <item android:id="@+id/settings"
             android:icon="@drawable/ic_baseline_settings_24"
@@ -24,21 +19,21 @@
             />
     </group>
 
-    <item android:title="Upload">
+    <item android:title="Details">
         <menu>
             <group android:checkableBehavior="single">
-                <item android:id="@+id/studentDetails"
-                    android:icon="@drawable/ic_baseline_add_24"
-                    android:title="Student Details"
+                <item android:id="@+id/inventoryDetails"
+                    android:icon="@drawable/ic_baseline_inventory_24"
+                    android:title="Inventory Details"
                     />
-                <item android:id="@+id/fees"
+                <item android:id="@+id/to_pay"
                     android:icon="@drawable/ic_baseline_fees_24"
-                    android:title="Upload Fees PaySlip"
+                    android:title="To Pay"
                     />
-                <item android:id="@+id/transcripts"
-                    android:icon="@drawable/ic_baseline_transcript_24"
-                    android:title="Upload Trascripts"
-                    />
+<!--                <item android:id="@+id/transcripts"-->
+<!--                    android:icon="@drawable/ic_baseline_transcript_24"-->
+<!--                    android:title="Upload Trascripts"-->
+<!--                    />-->
             </group>
         </menu>
     </item>

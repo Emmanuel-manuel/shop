@@ -9,17 +9,17 @@
 
 
     <item
-        android:id="@+id/users"
-        android:title="Manage Users"
-        android:icon="@drawable/ic_baseline_manage_accounts_24" />
+        android:id="@+id/issue_goods"
+        android:title="Issue Goods"
+        android:icon="@drawable/ic_baseline_production_quantity_limits_24" />
 
     <item
         android:title=""/>
 
     <item
-        android:id="@+id/mail"
-        android:title="Compose Email"
-        android:icon="@drawable/ic_baseline_email_24"
+        android:id="@+id/to_pay"
+        android:title="To Pay"
+        android:icon="@drawable/ic_baseline_payments_24"
         />
     <item
         android:id="@+id/announcements"

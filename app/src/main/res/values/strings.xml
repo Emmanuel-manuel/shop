@@ -8,10 +8,36 @@
         <!-- Add more roles here -->
     </string-array>
 
-<!--  .............  NAVIGATION MENU DRAWER  ................ -->
+    <!--  .............  NAVIGATION MENU DRAWER  ................ -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-<!--  .......................................................  -->
+    <!--  .......................................................  -->
+
+    <string-array name="type_array">
+        <item>Bites</item>
+        <item>Cibo</item>
+        <item>Grand Harvest</item>
+        <item>Mandazi</item>
+        <item>Round Bread</item>
+        <item>United Wax</item>
+        <item>United Poly</item>
+    </string-array>
+
+    <string-array name="size_array">
+        <item>200gms</item>
+        <item>400gms</item>
+        <item>600gms</item>
+        <item>800gms</item>
+        <item>1200gms</item>
+    </string-array>
+
+    <string-array name="flavour_array">
+        <item>Brown</item>
+        <item>Butter</item>
+        <item>Sweet</item>
+        <item>White</item>
+    </string-array>
+
 
     <string name="title_activity_login">LoginActivity</string>
     <!-- Strings used for fragments for navigation -->
@@ -22,6 +48,8 @@
 
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
     <!-- Strings used for fragments for navigation -->
 
 </resources>

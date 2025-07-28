@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ReceiveInventoryFragment">
+
+
+    <ScrollView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/background">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:background="@drawable/card_bg">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Receive Inventory"
+                    android:textStyle="bold"
+                    android:textSize="24sp"
+                    android:layout_gravity="center"
+                    android:textAllCaps="true"
+                    android:layout_marginBottom="16dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Add Today's Inventory"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerType"
+                    android:layout_width="250dp"
+                    android:layout_height="47dp"
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="8dp"
+                    android:entries="@array/type_array"/>
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="47dp"
+                    android:id="@+id/txtProductName"
+                    android:background="@drawable/edittext_bg"
+                    android:layout_marginBottom="8dp"
+                    android:hint="Enter Product Name"
+                    android:inputType="text"/>
+
+                <Spinner
+                    android:id="@+id/spinnerSize"
+                    android:layout_width="250dp"
+                    android:layout_height="47dp"
+                    android:layout_marginBottom="8dp"
+                    android:entries="@array/size_array"/>
+
+                <Spinner
+                    android:id="@+id/spinnerFlavour"
+                    android:layout_width="250dp"
+                    android:layout_height="47dp"
+                    android:layout_marginBottom="8dp"
+                    android:entries="@array/flavour_array"/>
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="47dp"
+                    android:id="@+id/txtQty"
+                    android:background="@drawable/edittext_bg"
+                    android:layout_marginBottom="8dp"
+                    android:hint="Enter Quantity"
+                    android:inputType="number"/>
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Save"
+                    android:id="@+id/saveButton"
+                    android:textSize="18sp"
+                    android:textColor="@color/white"
+                    android:layout_marginBottom="60dp"
+                    android:background="@drawable/button_bg"
+                    android:layout_gravity="center_horizontal"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+    </ScrollView>
+</FrameLayout>
