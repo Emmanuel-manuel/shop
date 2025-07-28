@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/home"
+            android:icon="@drawable/ic_baseline_home_24"
+            android:title="Home"
+            />
+        <item android:id="@+id/study_room"
+            android:icon="@drawable/ic_baseline_study_room_24"
+            android:title="Study Room"
+            />
+
+        <!--
+        <item android:id="@+id/progress"
+            android:icon="@drawable/ic_baseline_study_room_24"
+            android:title="Progress"
+            />
+            -->
+
+        <item android:id="@+id/settings"
+            android:icon="@drawable/ic_baseline_settings_24"
+            android:title="Settings"
+            />
+    </group>
+
+    <item android:title="Upload">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item android:id="@+id/studentDetails"
+                    android:icon="@drawable/ic_baseline_add_24"
+                    android:title="Student Details"
+                    />
+                <item android:id="@+id/fees"
+                    android:icon="@drawable/ic_baseline_fees_24"
+                    android:title="Upload Fees PaySlip"
+                    />
+                <item android:id="@+id/transcripts"
+                    android:icon="@drawable/ic_baseline_transcript_24"
+                    android:title="Upload Trascripts"
+                    />
+            </group>
+        </menu>
+    </item>
+
+    <item android:title="Profile">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item android:id="@+id/email"
+                    android:icon="@drawable/ic_baseline_email_24"
+                    android:title="Send Mail"
+                    />
+                <item android:id="@+id/contact"
+                    android:icon="@drawable/ic_baseline_contacts_24"
+                    android:title="Contact Us"
+                    />
+                <item android:id="@+id/logout"
+                    android:icon="@drawable/ic_baseline_logout_24"
+                    android:title="Log Out"
+                    />
+            </group>
+        </menu>
+    </item>
+
+
+</menu>

@@ -7,6 +7,12 @@
         <!--        <item>Administrator</item>-->
         <!-- Add more roles here -->
     </string-array>
+
+<!--  .............  NAVIGATION MENU DRAWER  ................ -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+<!--  .......................................................  -->
+
     <string name="title_activity_login">LoginActivity</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
