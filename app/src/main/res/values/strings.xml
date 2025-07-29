@@ -13,7 +13,8 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <!--  .......................................................  -->
 
-    <string-array name="type_array">
+    <string-array name="product_array">
+        <item>Select Product</item>
         <item>Bites</item>
         <item>Cibo</item>
         <item>Grand Harvest</item>
@@ -23,7 +24,8 @@
         <item>United Poly</item>
     </string-array>
 
-    <string-array name="size_array">
+    <string-array name="weight_array">
+        <item>Select Weight</item>
         <item>200gms</item>
         <item>400gms</item>
         <item>600gms</item>
@@ -32,6 +34,7 @@
     </string-array>
 
     <string-array name="flavour_array">
+        <item>Select Type/Flavour</item>
         <item>Brown</item>
         <item>Butter</item>
         <item>Sweet</item>

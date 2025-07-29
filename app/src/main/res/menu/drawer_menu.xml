@@ -24,7 +24,7 @@
             <group android:checkableBehavior="single">
                 <item android:id="@+id/inventoryDetails"
                     android:icon="@drawable/ic_baseline_inventory_24"
-                    android:title="Inventory Details"
+                    android:title="View Today's Inventory Details"
                     />
                 <item android:id="@+id/to_pay"
                     android:icon="@drawable/ic_baseline_fees_24"

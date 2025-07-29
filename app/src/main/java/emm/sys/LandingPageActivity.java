@@ -114,7 +114,8 @@ public class LandingPageActivity extends AppCompatActivity {
                     return true;
 
                 case R.id.inventoryDetails:
-                    // Handle inventory details
+                    // Handle View Today's inventory details
+                    handleViewTodayInventoryNavigation();
                     return true;
 
                 case R.id.to_pay:
@@ -175,11 +176,26 @@ public class LandingPageActivity extends AppCompatActivity {
                 .commit();
     }
 
-    // Helper method to reset FAB color
-//    private void resetFabToWhite() {
-//        fab.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.white));
-//    }
+    // Helper method for View Today's inventory navigation
+    private void handleViewTodayInventoryNavigation() {
 
+        // Clear BottomNavigationView selection
+        // 2. Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new ViewTodayInventoryFragment())
+                .addToBackStack(null)
+                .commit();
+    }
 
 
     @Override

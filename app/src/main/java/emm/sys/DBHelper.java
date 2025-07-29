@@ -10,25 +10,44 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DBHelper extends SQLiteOpenHelper {
 
-    public static final String DBNAME = "Login.db";
+    public static final String DBNAME = "Shop.db";
 
     public DBHelper(Context context) {
-        super(context, "Login.db", null, 1);
+        super(context, "Shop.db", null, 2);
     }
 
     //    ............. The database name is called LoginDetails ..............
     @Override
-    public void onCreate(SQLiteDatabase LoginDetails) {
-        LoginDetails.execSQL("create Table users(role TEXT, email TEXT primary key, password TEXT)");
+    public void onCreate(SQLiteDatabase db) {
+        // Create users table
+        db.execSQL("create Table users(role TEXT, email TEXT primary key, password TEXT)");
 
+        // Create inventory table
+        db.execSQL("CREATE TABLE inventory(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "product_name TEXT," +
+                "weight TEXT," +
+                "flavour TEXT," +
+                "quantity INTEGER," +
+                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase LoginDetails, int i, int i1) {
-        LoginDetails.execSQL("drop Table if exists users");
+    public void onUpgrade(SQLiteDatabase db, int i, int i1) {
+        db.execSQL("drop Table if exists users");
 
+        if (i < 2) {
+            db.execSQL("CREATE TABLE inventory(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "product_name TEXT," +
+                    "weight TEXT," +
+                    "flavour TEXT," +
+                    "quantity INTEGER," +
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        }
     }
 
+    // Method to insert User's data
     public Boolean insertData(String role, String email, String password) {
         SQLiteDatabase LoginDetails = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -42,6 +61,29 @@ public class DBHelper extends SQLiteOpenHelper {
 
     }
 
+    // New method to insert inventory data
+    public boolean insertInventory(String productName, String weight, String flavour, int quantity) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("product_name", productName);
+        values.put("weight", weight);
+        values.put("flavour", flavour);
+        values.put("quantity", quantity);
+
+        long result = db.insert("inventory", null, values);
+        return result != -1;
+    }
+
+
+
+
+
+
+
+
+
+
+    // ============== METHODS FOR USER SIGN-UP AND LOGIN ===============
     public Boolean checkusername(String email) {
         SQLiteDatabase LoginDetails = this.getWritableDatabase();
         Cursor cursor = LoginDetails.rawQuery("Select * from users where email = ?", new String[]{email});
@@ -60,17 +102,6 @@ public class DBHelper extends SQLiteOpenHelper {
             return false;
     }
 
-//    public Boolean checkRolePassword(String role, String password) {
-//        SQLiteDatabase LoginDetails = this.getWritableDatabase();
-//        Cursor cursor = LoginDetails.rawQuery(
-//                "SELECT * FROM users WHERE role = ? AND password = ?",
-//                new String[]{role, password}
-//        );
-//        boolean exists = cursor.getCount() > 0;
-//        cursor.close();
-//        return exists;
-//    }
-
     //a method to get email by role and password:
     public String getEmailByRolePassword(String role, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -87,4 +118,30 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return email;
     }
+    // ===============================================================
+
+    // ====== METHODS FOR MANAGING INVENTORY  ========================
+    public Cursor getTodayInventory() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT product_name, weight, flavour, quantity, timestamp " +
+                "FROM inventory WHERE date(timestamp) = date('now') " +
+                "ORDER BY timestamp DESC", null);
+    }
+
+    public boolean checkInventoryExists(String productName, String weight, String flavour) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM inventory WHERE " +
+                "product_name = ? AND " +
+                "weight = ? AND " +
+                "flavour = ? AND " +
+                "date(timestamp) = date('now')";
+
+        Cursor cursor = db.rawQuery(query, new String[]{productName, weight, flavour});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+
+    // =================================================================
 }

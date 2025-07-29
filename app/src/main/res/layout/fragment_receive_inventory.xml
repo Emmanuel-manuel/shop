@@ -44,12 +44,12 @@
                     android:layout_marginBottom="8dp"/>
 
                 <Spinner
-                    android:id="@+id/spinnerType"
+                    android:id="@+id/spinnerProduct"
                     android:layout_width="250dp"
                     android:layout_height="47dp"
                     android:layout_marginBottom="8dp"
                     android:layout_marginTop="8dp"
-                    android:entries="@array/type_array"/>
+                    android:entries="@array/product_array"/>
 
                 <EditText
                     android:layout_width="match_parent"
@@ -61,11 +61,11 @@
                     android:inputType="text"/>
 
                 <Spinner
-                    android:id="@+id/spinnerSize"
+                    android:id="@+id/spinnerWeight"
                     android:layout_width="250dp"
                     android:layout_height="47dp"
                     android:layout_marginBottom="8dp"
-                    android:entries="@array/size_array"/>
+                    android:entries="@array/weight_array"/>
 
                 <Spinner
                     android:id="@+id/spinnerFlavour"
