@@ -11,12 +11,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="View Today's Inventory"
+            android:layout_marginStart="12dp"
+            android:id="@+id/txtHeader"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_gravity="center"
+            android:textAllCaps="true"
+            android:layout_marginBottom="2dp"/>
+
         <androidx.appcompat.widget.SearchView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="13dp"
-            android:layout_marginStart="40dp"
-            android:layout_marginEnd="42dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_below="@id/txtHeader"
             android:id="@+id/search"
             app:iconifiedByDefault="false"
             app:searchHintIcon="@null"

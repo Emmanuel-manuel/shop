@@ -26,14 +26,14 @@
                     android:icon="@drawable/ic_baseline_inventory_24"
                     android:title="View Today's Inventory Details"
                     />
+                <item android:id="@+id/issuedDetails"
+                    android:icon="@drawable/ic_baseline_transcript_24"
+                    android:title="View Issued Goods"
+                    />
                 <item android:id="@+id/to_pay"
                     android:icon="@drawable/ic_baseline_fees_24"
                     android:title="To Pay"
                     />
-<!--                <item android:id="@+id/transcripts"-->
-<!--                    android:icon="@drawable/ic_baseline_transcript_24"-->
-<!--                    android:title="Upload Trascripts"-->
-<!--                    />-->
             </group>
         </menu>
     </item>

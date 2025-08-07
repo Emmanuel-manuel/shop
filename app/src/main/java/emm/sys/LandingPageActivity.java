@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -118,6 +120,11 @@ public class LandingPageActivity extends AppCompatActivity {
                     handleViewTodayInventoryNavigation();
                     return true;
 
+                case R.id.issuedDetails:
+                    transition();
+                    handleViewIssuedGoodsNavigation();
+                    return true;
+
                 case R.id.to_pay:
                     // Handle to pay
                     return true;
@@ -135,8 +142,38 @@ public class LandingPageActivity extends AppCompatActivity {
             }        });
 
         // ............. Working with Fragments of Bottom Navigation Buttons ..............
-        // Initialize FAB and the bottom navigation View
+        // BEGINNING OF BOTTOM NAVIGATION VIEW
+        replaceFragment(new HomeFragment());
+
         bottomNavView = findViewById(R.id.bottom_navView);
+
+//        bottomNavView.setBackground(null);
+        bottomNavView.setOnItemSelectedListener(item -> {
+
+
+            switch (item.getItemId()) {
+                case R.id.home:
+                    replaceFragment(new HomeFragment());
+                    break;
+                case R.id.issue_goods:
+                    transition();
+                    replaceFragment(new IssueGoodsFragment());
+                    break;
+                case R.id.to_pay:
+                    replaceFragment(new ToPayFragment());
+                    break;
+                case R.id.announcements:
+                    replaceFragment(new AnnouncementFragment());
+                    break;
+            }
+
+            return true;
+        });
+
+        // Set default selection
+        bottomNavView.setSelectedItemId(R.id.home);
+
+        // Initialize FAB and the bottom navigation View
 
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
@@ -152,8 +189,28 @@ public class LandingPageActivity extends AppCompatActivity {
 
     }
 
+    //    OUTSIDE "onCreate"
 
-    // Helper method for inventory navigation
+    private  void replaceFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.setCustomAnimations(
+                R.anim.fragment_enter,
+                R.anim.fragment_exit,
+                R.anim.fragment_enter,
+                R.anim.fragment_exit
+        );
+
+        transaction.replace(R.id.fragmentContainer, fragment);
+        // Only add to back stack if not the home fragment
+        if (!(fragment instanceof HomeFragment)) {
+            transaction.addToBackStack(null);
+        }
+        transaction.commit();
+    }
+
+    // .............. HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ..........
+    // Helper method for Receive inventory navigation
     private void handleReceiveInventoryNavigation() {
         // Change FAB color to blue
 //        fab.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.blue));
@@ -175,7 +232,6 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
-
     // Helper method for View Today's inventory navigation
     private void handleViewTodayInventoryNavigation() {
 
@@ -196,7 +252,38 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
+    // Helper method for View Issued Goods/ inventory navigation
+    private void handleViewIssuedGoodsNavigation() {
 
+        // Clear BottomNavigationView selection
+        // 2. Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new IssueGoodsFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    // method for smooth transition
+    private void transition(){
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit);
+    }
+
+    // .............. END OF HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ..........
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
