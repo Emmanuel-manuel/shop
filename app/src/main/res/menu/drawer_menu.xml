@@ -11,6 +11,10 @@
             android:title="Receive Inventory"
             />
 
+        <item android:id="@+id/issue_goods"
+            android:icon="@drawable/ic_baseline_transcript_24"
+            android:title="Issue Goods"
+            />
 
 
         <item android:id="@+id/settings"
@@ -26,7 +30,7 @@
                     android:icon="@drawable/ic_baseline_inventory_24"
                     android:title="View Today's Inventory Details"
                     />
-                <item android:id="@+id/issuedDetails"
+                <item android:id="@+id/viewIssuedDetails"
                     android:icon="@drawable/ic_baseline_transcript_24"
                     android:title="View Issued Goods"
                     />

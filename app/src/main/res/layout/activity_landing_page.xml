@@ -18,13 +18,16 @@
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            android:background="@android:color/transparent"
+            android:elevation="0dp">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/lavender"
+                android:elevation="1dp"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
                 <!-- Menu Icon at start (left) -->
@@ -38,34 +41,32 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:weightSum="2">
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:paddingStart="1dp"
+                    android:paddingEnd="6dp">
 
                     <!-- Time greeting on the Left-->
                     <TextView
                         android:id="@+id/welcomeTime"
-                        android:layout_width="16dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:padding="3dp"
                         android:text="Good Morning"
                         android:textColor="@color/black"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:textSize="14sp"
+                        android:textStyle="normal" />
 
                     <!-- Email welcome on the Right-->
                     <TextView
                         android:id="@+id/welcomeText"
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="end"
                         android:text="Welcome!"
                         android:textColor="@color/black"
                         android:textSize="11sp"
                         android:textStyle="bold"
-                        android:padding="5dp"/>
+                        android:layout_marginTop="2dp"/>
                 </LinearLayout>
 
             </androidx.appcompat.widget.Toolbar>

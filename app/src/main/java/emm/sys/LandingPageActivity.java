@@ -120,9 +120,14 @@ public class LandingPageActivity extends AppCompatActivity {
                     handleViewTodayInventoryNavigation();
                     return true;
 
-                case R.id.issuedDetails:
+                case R.id.issue_goods:
                     transition();
-                    handleViewIssuedGoodsNavigation();
+                    handleIssueGoodsNavigation();
+                    return true;
+
+                case R.id.viewIssuedDetails:
+                    transition();
+//                    handleIssueGoodsNavigation();
                     return true;
 
                 case R.id.to_pay:
@@ -253,7 +258,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 .commit();
     }
     // Helper method for View Issued Goods/ inventory navigation
-    private void handleViewIssuedGoodsNavigation() {
+    private void handleIssueGoodsNavigation() {
 
         // Clear BottomNavigationView selection
         // 2. Clear BottomNavigationView selection
