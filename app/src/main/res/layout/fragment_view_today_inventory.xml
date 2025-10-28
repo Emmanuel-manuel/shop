@@ -45,8 +45,8 @@
             android:layout_height="match_parent"
             android:id="@+id/userRecyclerView"
             android:scrollbars="vertical"
-            android:padding="16dp"
-            android:layout_marginTop="8dp"
+            android:padding="6dp"
+            android:layout_marginTop="3dp"
             android:clipToPadding="false"
             android:layout_below="@+id/search"/>
 

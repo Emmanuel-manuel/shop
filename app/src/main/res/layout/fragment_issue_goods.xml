@@ -45,23 +45,42 @@
                 <Spinner
                     android:id="@+id/spinnerAssignee"
                     android:layout_width="250dp"
-                    android:layout_height="47dp"
+                    android:layout_height="50dp"
                     android:layout_marginBottom="8dp"
                     android:layout_marginTop="8dp"
                     android:entries="@array/product_assignee"
                     />
 
-                <Spinner
-                    android:id="@+id/spinnerProduct"
-                    android:layout_width="250dp"
-                    android:layout_height="47dp"
+                <!-- Product Selection and Balance in Horizontal Layout -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:layout_marginBottom="8dp"
-                    android:layout_marginTop="8dp"
-                    android:entries="@array/product_array"/>
+                    android:gravity="center_vertical">
+
+                    <Spinner
+                        android:id="@+id/spinnerProduct"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:entries="@array/product_array"/>
+
+                    <EditText
+                        android:id="@+id/txtProductBal"
+                        android:layout_width="100dp"
+                        android:layout_height="50dp"
+                        android:background="@drawable/edittext_bg"
+                        android:hint="Balance"
+                        android:inputType="number"
+                        android:enabled="false"
+                        android:textColor="@color/black"/>
+                </LinearLayout>
 
                 <EditText
                     android:layout_width="match_parent"
-                    android:layout_height="47dp"
+                    android:layout_height="50dp"
                     android:id="@+id/txtProductName"
                     android:background="@drawable/edittext_bg"
                     android:layout_marginBottom="8dp"
@@ -71,25 +90,55 @@
                 <Spinner
                     android:id="@+id/spinnerWeight"
                     android:layout_width="250dp"
-                    android:layout_height="47dp"
+                    android:layout_height="50dp"
                     android:layout_marginBottom="8dp"
                     android:entries="@array/weight_array"/>
 
                 <Spinner
                     android:id="@+id/spinnerFlavour"
                     android:layout_width="250dp"
-                    android:layout_height="47dp"
+                    android:layout_height="50dp"
                     android:layout_marginBottom="8dp"
                     android:entries="@array/flavour_array"/>
 
+                <!-- Quantity Input and Real-time Balance Update -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center_vertical">
+
+                    <EditText
+                        android:id="@+id/txtQty"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/edittext_bg"
+                        android:hint="Enter Quantity"
+                        android:inputType="numberDecimal"/>
+
+                    <TextView
+                        android:id="@+id/txtUpdatedBalance"
+                        android:layout_width="100dp"
+                        android:layout_height="50dp"
+                        android:background="@drawable/edittext_bg"
+                        android:hint="New Balance"
+                        android:inputType="number"
+                        android:enabled="false"
+                        android:textColor="@color/black"
+                        android:gravity="center"/>
+                </LinearLayout>
+
                 <EditText
                     android:layout_width="match_parent"
-                    android:layout_height="47dp"
-                    android:id="@+id/txtQty"
+                    android:layout_height="50dp"
+                    android:id="@+id/txtStation"
                     android:background="@drawable/edittext_bg"
                     android:layout_marginBottom="8dp"
-                    android:hint="Enter Quantity"
-                    android:inputType="number"/>
+                    android:hint="Enter Station Issued"
+                    android:inputType="text"/>
 
                 <Button
                     android:layout_width="match_parent"

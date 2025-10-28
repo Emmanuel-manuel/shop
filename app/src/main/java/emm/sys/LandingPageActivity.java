@@ -2,7 +2,12 @@ package emm.sys;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.ImageButton;
 
@@ -20,6 +25,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Calendar;
 
 public class LandingPageActivity extends AppCompatActivity {
@@ -29,6 +36,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private FloatingActionButton fab;
     private BottomNavigationView bottomNavView;
     private NavigationView navigationView;
+    private ImageView profileIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,9 +45,11 @@ public class LandingPageActivity extends AppCompatActivity {
 
         TextView welcomeText = findViewById(R.id.welcomeText);
         TextView welcomeTime = findViewById(R.id.welcomeTime);
+        profileIcon = findViewById(R.id.profileIcon);
 
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
+
         // Setup toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         // Set the toolbar as action bar
@@ -56,10 +66,13 @@ public class LandingPageActivity extends AppCompatActivity {
                 this, drawerLayout, toolbar,
                 R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
-        drawerLayout.addDrawerListener(drawerToggle);
+        drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
 
-// ............... WELCOME MESSAGES............................................................................
+        // Setup profile icon click listener
+        setupProfileIcon();
+
+// .......................... WELCOME MESSAGES...................................
         String email = getIntent().getStringExtra("USER_EMAIL");
 
         if (email != null) {
@@ -73,14 +86,13 @@ public class LandingPageActivity extends AppCompatActivity {
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
 
         if (hour >= 0 && hour < 12) {
-            welcomeTime.setText("Good Morning");
+            welcomeTime.setText("Good Morning!");
         } else if (hour >= 12 && hour < 17) {
-            welcomeTime.setText("Good Afternoon");
+            welcomeTime.setText("Good Afternoon!");
         } else {
-            welcomeTime.setText("Good Evening");
+            welcomeTime.setText("Good Evening!");
         }
         // ..........................................................................
-
 
         // .................. Handle Drawer Menu navigation item clicks .................
         navigationView.setNavigationItemSelectedListener(item -> {
@@ -94,7 +106,6 @@ public class LandingPageActivity extends AppCompatActivity {
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.fragmentContainer, new HomeFragment())
                             .commit();
-//                    resetFabToWhite(); // Reset FAB color
                     return true;
 
                 case R.id.receive_inventory:
@@ -104,10 +115,7 @@ public class LandingPageActivity extends AppCompatActivity {
 
                 case R.id.logout:
                     // Handle logout - go to LoginActivity and clear back stack
-                    Intent intent = new Intent(this, LoginActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    finish(); // Finish current activity
+                    performLogout();
                     return true;
 
                 // Add other cases for additional menu items
@@ -144,7 +152,8 @@ public class LandingPageActivity extends AppCompatActivity {
 
                 default:
                     return false;
-            }        });
+            }
+        });
 
         // ............. Working with Fragments of Bottom Navigation Buttons ..............
         // BEGINNING OF BOTTOM NAVIGATION VIEW
@@ -171,7 +180,6 @@ public class LandingPageActivity extends AppCompatActivity {
                     replaceFragment(new AnnouncementFragment());
                     break;
             }
-
             return true;
         });
 
@@ -179,23 +187,83 @@ public class LandingPageActivity extends AppCompatActivity {
         bottomNavView.setSelectedItemId(R.id.home);
 
         // Initialize FAB and the bottom navigation View
-
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
-
             handleReceiveInventoryNavigation();
         });
-
-
-
-
-        // .........................................................................
-
-
     }
 
-    //    OUTSIDE "onCreate"
+    // Setup profile icon functionality
+    private void setupProfileIcon() {
+        if (profileIcon != null) {
+            profileIcon.setOnClickListener(view -> {
+                showProfileMenu(view);
+            });
+        }
+    }
 
+    // Show profile menu popup
+    private void showProfileMenu(View anchorView) {
+        PopupMenu popupMenu = new PopupMenu(this, anchorView);
+        popupMenu.getMenuInflater().inflate(R.menu.profile_menu, popupMenu.getMenu());
+
+
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                int id = item.getItemId();
+
+                if (id == R.id.settings) {
+                    // Handle settings action
+                    handleSettingsNavigation();
+                    return true;
+                } else if (id == R.id.logout) {
+                    // Handle logout action
+                    performLogout();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        popupMenu.show();
+    }
+
+    // Handle settings navigation
+    private void handleSettingsNavigation() {
+        // Navigate to SettingsFragment or SettingsActivity
+        // Example: replaceFragment(new SettingsFragment());
+        // Toast.makeText(this, "Settings clicked", Toast.LENGTH_SHORT).show();
+
+        // Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true);
+        bottomNavView.getMenu().setGroupCheckable(0, true, true);
+        bottomNavView.setSelectedItemId(0);
+
+        // If you have a SettingsFragment, uncomment below:
+         getSupportFragmentManager().beginTransaction()
+                 .setCustomAnimations(
+                         R.anim.fragment_enter,
+                         R.anim.fragment_exit,
+                         R.anim.fragment_enter,
+                         R.anim.fragment_exit)
+                 .replace(R.id.fragmentContainer, new SettingsFragment())
+                 .addToBackStack(null)
+                 .commit();
+    }
+
+    // Perform logout
+    private void performLogout() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+    // .........................................................................
+
+
+
+    //    OUTSIDE "onCreate"
     private  void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
@@ -217,11 +285,8 @@ public class LandingPageActivity extends AppCompatActivity {
     // .............. HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ..........
     // Helper method for Receive inventory navigation
     private void handleReceiveInventoryNavigation() {
-        // Change FAB color to blue
-//        fab.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.blue));
 
         // Clear BottomNavigationView selection
-        // 2. Clear BottomNavigationView selection
         bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
         bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
         bottomNavView.setSelectedItemId(0); // Clear selection
@@ -241,7 +306,6 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleViewTodayInventoryNavigation() {
 
         // Clear BottomNavigationView selection
-        // 2. Clear BottomNavigationView selection
         bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
         bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
         bottomNavView.setSelectedItemId(0); // Clear selection
@@ -261,7 +325,6 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleIssueGoodsNavigation() {
 
         // Clear BottomNavigationView selection
-        // 2. Clear BottomNavigationView selection
         bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
         bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
         bottomNavView.setSelectedItemId(0); // Clear selection
@@ -288,7 +351,7 @@ public class LandingPageActivity extends AppCompatActivity {
                         R.anim.fragment_exit);
     }
 
-    // .............. END OF HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ..........
+    // .............. END OF HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ............
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -317,6 +380,5 @@ public class LandingPageActivity extends AppCompatActivity {
             moveTaskToBack(true);
         }
     }
-
 
 }

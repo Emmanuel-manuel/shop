@@ -54,6 +54,7 @@ public class IssueGoodsFragment extends Fragment {
         // Get values from form
         String assignee = spinnerAssignee.getSelectedItem().toString();
         String productName = txtProductName.getText().toString().trim();
+//        String productName1 = spinnerProduct.getSelectedItem().toString();
         String weight = spinnerWeight.getSelectedItem().toString();
         String flavour = spinnerFlavour.getSelectedItem().toString();
         String quantityStr = txtQty.getText().toString().trim();
@@ -64,9 +65,12 @@ public class IssueGoodsFragment extends Fragment {
             return;
         }
 
+        if (productName.isEmpty()) {
+            productName = spinnerProduct.getSelectedItem().toString();
+        }
         if (productName.isEmpty()||productName.equals("Select Product")) {
             txtProductName.setError("Product name is required");
-            Toast.makeText(getActivity(), "Please select a Product", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Please enter or select a Product", Toast.LENGTH_SHORT).show();
             txtProductName.requestFocus();
             return;
         }

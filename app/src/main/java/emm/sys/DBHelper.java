@@ -13,7 +13,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String DBNAME = "Shop.db";
 
     public DBHelper(Context context) {
-        super(context, "Shop.db", null, 2);
+
+        super(context, "Shop.db", null, 4);
     }
 
     //    ............. The database name is called LoginDetails ..............
@@ -31,6 +32,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "weight TEXT," +
                 "flavour TEXT," +
                 "quantity INTEGER," +
+                "balance INTEGER,"+
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
         // Create issue_goods table
@@ -54,8 +56,20 @@ public class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
 
         if (i < 2) {
+            // Upgrade from version 1 to 2
             db.execSQL("CREATE TABLE inventory(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "product_name TEXT," +
+                    "weight TEXT," +
+                    "flavour TEXT," +
+                    "quantity INTEGER," +
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        }
+        if (i < 3) {
+            // Upgrade from version 2 to 3 (adding issue_goods table)
+            db.execSQL("CREATE TABLE issue_goods(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "assignee TEXT," +
                     "product_name TEXT," +
                     "weight TEXT," +
                     "flavour TEXT," +
@@ -87,6 +101,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("weight", weight);
         values.put("flavour", flavour);
         values.put("quantity", quantity);
+        values.put("balance", quantity);
 
         long result = db.insert("inventory", null, values);
         return result != -1;

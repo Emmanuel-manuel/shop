@@ -45,20 +45,24 @@ public class ReceiveInventoryFragment extends Fragment {
 
     private void saveInventoryData() {
         // Get product name (manual entry takes priority)
+        // Get other values
+        String weight = spinnerWeight.getSelectedItem().toString();
+        String flavour = spinnerFlavour.getSelectedItem().toString();
+//        String productName1 = spinnerProduct.getSelectedItem().toString();
         String productName = txtProductName.getText().toString().trim();
+
         if (productName.isEmpty()) {
             productName = spinnerProduct.getSelectedItem().toString();
         }
 
         // =======VALIDATION BLOCK ======
-            if (productName.isEmpty() || productName.equals("Select Product")) {
+            if (productName.isEmpty()||productName.equals("Select Product")) {
+                txtProductName.setError("Product name is required");
                 Toast.makeText(getActivity(), "Please enter or select a product", Toast.LENGTH_SHORT).show();
+                txtProductName.requestFocus();
                 return;
             }
 
-        // Get other values
-        String weight = spinnerWeight.getSelectedItem().toString();
-        String flavour = spinnerFlavour.getSelectedItem().toString();
 
         // Validate quantity
         String quantityStr = txtQty.getText().toString().trim();
