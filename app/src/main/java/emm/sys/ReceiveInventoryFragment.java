@@ -1,9 +1,7 @@
 package emm.sys;
 
 import android.os.Bundle;
-
 import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +9,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
-
 
 public class ReceiveInventoryFragment extends Fragment {
 
@@ -21,12 +18,9 @@ public class ReceiveInventoryFragment extends Fragment {
     private Button saveButton;
     private DBHelper dbHelper;
 
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_receive_inventory, container, false);
 
         // Initialize views
@@ -45,10 +39,8 @@ public class ReceiveInventoryFragment extends Fragment {
 
     private void saveInventoryData() {
         // Get product name (manual entry takes priority)
-        // Get other values
         String weight = spinnerWeight.getSelectedItem().toString();
         String flavour = spinnerFlavour.getSelectedItem().toString();
-//        String productName1 = spinnerProduct.getSelectedItem().toString();
         String productName = txtProductName.getText().toString().trim();
 
         if (productName.isEmpty()) {
@@ -56,13 +48,12 @@ public class ReceiveInventoryFragment extends Fragment {
         }
 
         // =======VALIDATION BLOCK ======
-            if (productName.isEmpty()||productName.equals("Select Product")) {
-                txtProductName.setError("Product name is required");
-                Toast.makeText(getActivity(), "Please enter or select a product", Toast.LENGTH_SHORT).show();
-                txtProductName.requestFocus();
-                return;
-            }
-
+        if (productName.isEmpty()||productName.equals("Select Product")) {
+            txtProductName.setError("Product name is required");
+            Toast.makeText(getActivity(), "Please enter or select a product", Toast.LENGTH_SHORT).show();
+            txtProductName.requestFocus();
+            return;
+        }
 
         // Validate quantity
         String quantityStr = txtQty.getText().toString().trim();
@@ -71,7 +62,6 @@ public class ReceiveInventoryFragment extends Fragment {
             return;
         }
         int quantity;
-        // ............ QUANTITY DATA VALIDATION
         try {
             quantity = Integer.parseInt(quantityStr);
             if (quantity <= 0) {
@@ -82,7 +72,6 @@ public class ReceiveInventoryFragment extends Fragment {
             txtQty.setError("Invalid quantity");
             return;
         }
-        // .........................................
 
         // ====== DUPLICATE CHECK ======
         if (dbHelper.checkInventoryExists(productName, weight, flavour)) {
@@ -92,12 +81,15 @@ public class ReceiveInventoryFragment extends Fragment {
             clearForm();
             return;
         }
-        // ====== END OF DUPLICATE CHECK CODE ======
-        // Save to database
+
+        // Save to database - balance will be automatically set equal to quantity
         boolean isSuccess = dbHelper.insertInventory(productName, weight, flavour, quantity);
 
         if (isSuccess) {
-            Toast.makeText(getActivity(), "Inventory saved successfully!", Toast.LENGTH_SHORT).show();
+            // Display balance information
+            int currentBalance = dbHelper.getProductBalance(productName);
+            String message = "Inventory saved successfully! Balance: " + currentBalance;
+            Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
             clearForm();
         } else {
             Toast.makeText(getActivity(), "Failed to save inventory", Toast.LENGTH_SHORT).show();
@@ -110,10 +102,14 @@ public class ReceiveInventoryFragment extends Fragment {
         spinnerProduct.setSelection(0);
         spinnerWeight.setSelection(0);
         spinnerFlavour.setSelection(0);
-        txtProductName.requestFocus(); // focus back on product name
+        txtProductName.requestFocus();
     }
 
-
-
-
+    @Override
+    public void onDestroy() {
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
+        super.onDestroy();
+    }
 }
