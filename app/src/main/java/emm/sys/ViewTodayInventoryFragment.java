@@ -67,6 +67,7 @@ public class ViewTodayInventoryFragment extends Fragment {
                 int weightIndex = cursor.getColumnIndexOrThrow("weight");
                 int flavourIndex = cursor.getColumnIndexOrThrow("flavour");
                 int quantityIndex = cursor.getColumnIndexOrThrow("quantity");
+                int balanceIndex = cursor.getColumnIndexOrThrow("balance");
                 int timestampIndex = cursor.getColumnIndexOrThrow("timestamp");
 
                 if (cursor.moveToFirst()) {
@@ -76,6 +77,7 @@ public class ViewTodayInventoryFragment extends Fragment {
                                 cursor.getString(weightIndex),
                                 cursor.getString(flavourIndex),
                                 cursor.getInt(quantityIndex),
+                                cursor.getInt(balanceIndex),
                                 cursor.getString(timestampIndex)
                         );
                         items.add(item);
@@ -90,6 +92,11 @@ public class ViewTodayInventoryFragment extends Fragment {
         }
 
         adapter.updateList(items);
+
+        // Show message if no items found
+        if (items.isEmpty()) {
+            Toast.makeText(getActivity(), "No inventory found for today", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void filter(String text) {
@@ -102,6 +109,7 @@ public class ViewTodayInventoryFragment extends Fragment {
                 int weightIndex = cursor.getColumnIndexOrThrow("weight");
                 int flavourIndex = cursor.getColumnIndexOrThrow("flavour");
                 int quantityIndex = cursor.getColumnIndexOrThrow("quantity");
+                int balanceIndex = cursor.getColumnIndexOrThrow("balance");
                 int timestampIndex = cursor.getColumnIndexOrThrow("timestamp");
 
                 if (cursor.moveToFirst()) {
@@ -113,6 +121,7 @@ public class ViewTodayInventoryFragment extends Fragment {
                                     cursor.getString(weightIndex),
                                     cursor.getString(flavourIndex),
                                     cursor.getInt(quantityIndex),
+                                    cursor.getInt(balanceIndex),
                                     cursor.getString(timestampIndex)
                             ));
                         }
@@ -126,5 +135,13 @@ public class ViewTodayInventoryFragment extends Fragment {
         }
 
         adapter.updateList(filteredList);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
+        super.onDestroy();
     }
 }

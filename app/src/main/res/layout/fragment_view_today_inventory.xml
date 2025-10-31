@@ -42,7 +42,7 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="560dp"
             android:id="@+id/userRecyclerView"
             android:scrollbars="vertical"
             android:padding="6dp"
