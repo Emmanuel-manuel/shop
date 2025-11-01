@@ -60,6 +60,7 @@
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Settings blank fragment</string>
+    <string name="home_blank_fragment">Home blank fragment</string>
     <!-- Strings used for fragments for navigation -->
 
 </resources>

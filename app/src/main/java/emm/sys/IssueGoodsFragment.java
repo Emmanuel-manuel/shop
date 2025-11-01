@@ -226,9 +226,9 @@ public class IssueGoodsFragment extends Fragment {
         }
 
         // Check for duplicate issue
-        if (dbHelper.checkDuplicateIssue(assignee, productName, weight, flavour)) {
-            String message = String.format("You've already issued this product - (%s, %s, %s) to %s",
-                    productName, weight, flavour, assignee);
+        if (dbHelper.checkDuplicateIssue(assignee, productName, weight, flavour, station)) {
+            String message = String.format("You've already issued this product - (%s, %s, %s) to %s at %s station",
+                    productName, weight, flavour, assignee, station);
             Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
             return;
         }

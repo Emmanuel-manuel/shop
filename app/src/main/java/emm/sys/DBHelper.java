@@ -215,16 +215,17 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.rawQuery("SELECT * FROM issue_goods ORDER BY timestamp DESC", null);
     }
 
-    public boolean checkDuplicateIssue(String assignee, String productName, String weight, String flavour) {
+    public boolean checkDuplicateIssue(String assignee, String productName, String weight, String flavour, String station) {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM issue_goods WHERE " +
                 "assignee = ? AND " +
                 "product_name = ? AND " +
                 "weight = ? AND " +
                 "flavour = ? AND " +
+                "station = ? AND " +
                 "date(timestamp) = date('now')";
 
-        Cursor cursor = db.rawQuery(query, new String[]{assignee, productName, weight, flavour});
+        Cursor cursor = db.rawQuery(query, new String[]{assignee, productName, weight, flavour, station});
         boolean exists = cursor.getCount() > 0;
         cursor.close();
         return exists;
