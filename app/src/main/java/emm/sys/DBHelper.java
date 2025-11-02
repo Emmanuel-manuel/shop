@@ -64,7 +64,7 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     // .............. METHODS THAT PUSH DATA IN THE TABLES .....................
-    // Method to insert User's data
+    // ============ Method to insert User's data ============
     public Boolean insertData(String role, String email, String password) {
         SQLiteDatabase LoginDetails = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -75,7 +75,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return result != -1;
     }
 
-    // Updated method to insert inventory data - sets balance = quantity
+    // ============ Updated method to insert inventory data - sets balance = quantity ============
     public boolean insertInventory(String productName, String weight, String flavour, int quantity) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -89,7 +89,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return result != -1;
     }
 
-    // Method to get current balance for a product
+    // ============  Method to get current balance for a product ============
     public int getProductBalance(String productName) {
         SQLiteDatabase db = this.getReadableDatabase();
         int balance = 0;
@@ -107,10 +107,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return balance;
     }
 
-
-
-
-    // Method to update inventory balance with specific new balance value
+    // ============ Method to update inventory balance with specific new balance value =====
     public boolean updateInventoryBalance(String productName, int newBalance) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -125,7 +122,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return rowsAffected > 0;
     }
 
-    // Updated method to insert issued goods and update inventory balance
+    // ========= Updated method to insert issued goods and update inventory balance ======
     public boolean insertIssuedGoods(String assignee, String productName, String weight,
                                      String flavour, int quantity, String station, int newBalance) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -215,6 +212,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.rawQuery("SELECT * FROM issue_goods ORDER BY timestamp DESC", null);
     }
 
+    // ============ METHOD FOR CHECKING DUPLICATE ENTRIES WHILE ISSUING GOODS ============
     public boolean checkDuplicateIssue(String assignee, String productName, String weight, String flavour, String station) {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM issue_goods WHERE " +
@@ -230,4 +228,128 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return exists;
     }
+
+
+
+
+    // ============  Method to get issued goods by ID ============
+    public Cursor getIssuedGoodsById(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM issue_goods WHERE id = ?", new String[]{String.valueOf(id)});
+    }
+
+    //  ============ Method to update issued goods ============
+    public boolean updateIssuedGoods(int id, String assignee, String productName, String weight,
+                                     String flavour, int quantity, String station) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("assignee", assignee);
+        values.put("product_name", productName);
+        values.put("weight", weight);
+        values.put("flavour", flavour);
+        values.put("quantity", quantity);
+        values.put("station", station);
+
+        int rowsAffected = db.update("issue_goods", values, "id = ?", new String[]{String.valueOf(id)});
+        return rowsAffected > 0;
+    }
+
+    // ============ Method to delete issued goods and restore inventory balance ============
+    public boolean deleteIssuedGoods(int id, String productName, int quantity) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.beginTransaction();
+        try {
+            // First, restore the inventory balance
+            int currentBalance = getProductBalance(productName);
+            int newBalance = currentBalance + quantity;
+            boolean balanceUpdated = updateInventoryBalance(productName, newBalance);
+
+            if (balanceUpdated) {
+                // Then delete the issued goods record
+                int rowsDeleted = db.delete("issue_goods", "id = ?", new String[]{String.valueOf(id)});
+                if (rowsDeleted > 0) {
+                    db.setTransactionSuccessful();
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    //  ============ Method to update issued goods and adjust inventory balance ============
+    public boolean updateIssuedGoodsWithBalance(int id, String assignee, String productName, String weight,
+                                                String flavour, int oldQuantity, int newQuantity,
+                                                String station, int currentBalance) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.beginTransaction();
+        try {
+            // Calculate the balance difference
+            int quantityDifference = oldQuantity - newQuantity;
+            int newBalance = currentBalance + quantityDifference;
+
+            // Update inventory balance
+            boolean balanceUpdated = updateInventoryBalance(productName, newBalance);
+
+            if (balanceUpdated) {
+                // Update issued goods record
+                ContentValues values = new ContentValues();
+                values.put("assignee", assignee);
+                values.put("product_name", productName);
+                values.put("weight", weight);
+                values.put("flavour", flavour);
+                values.put("quantity", newQuantity);
+                values.put("station", station);
+
+                int rowsAffected = db.update("issue_goods", values, "id = ?", new String[]{String.valueOf(id)});
+                if (rowsAffected > 0) {
+                    db.setTransactionSuccessful();
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    // ============ Method to get today's balance for a specific product ============
+    public int getTodayProductBalance(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int balance = 0;
+
+        Cursor cursor = db.rawQuery(
+                "SELECT balance FROM inventory WHERE product_name = ? AND date(timestamp) = date('now') ORDER BY timestamp DESC LIMIT 1",
+                new String[]{productName}
+        );
+
+        if (cursor.moveToFirst()) {
+            balance = cursor.getInt(0);
+        }
+        cursor.close();
+
+        return balance;
+    }
+
+    // ============ Method to check if product exists in today's inventory ============
+    public boolean isProductReceivedToday(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM inventory WHERE product_name = ? AND date(timestamp) = date('now') LIMIT 1",
+                new String[]{productName}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+
+        return exists;
+    }
+
+
+
+
 }

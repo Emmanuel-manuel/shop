@@ -135,7 +135,7 @@ public class LandingPageActivity extends AppCompatActivity {
 
                 case R.id.viewIssuedDetails:
                     transition();
-//                    handleIssueGoodsNavigation();
+                    handleViewIssuedGoodsNavigation();
                     return true;
 
                 case R.id.to_pay:
@@ -340,7 +340,25 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
+    // Helper method for View Today's inventory navigation
+    private void handleViewIssuedGoodsNavigation() {
 
+        // Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new ViewIssuedGoodsFragment())
+                .addToBackStack(null)
+                .commit();
+    }
     // method for smooth transition
     private void transition(){
         getSupportFragmentManager().beginTransaction()

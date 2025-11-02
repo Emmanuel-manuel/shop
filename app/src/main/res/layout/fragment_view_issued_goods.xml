@@ -4,46 +4,36 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ViewTodayInventoryFragment">
+    tools:context=".ViewIssuedGoodsFragment">
 
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- First Row: Product Name and Weight -->
-        <LinearLayout
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/id_header"
-            android:weightSum="2">
-
-        <TextView
-            android:id="@+id/txtHeader"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="View Inventory"
-            android:layout_weight="1"
+            android:text="View Issued Goods"
             android:layout_marginStart="12dp"
+            android:id="@+id/txtHeader"
             android:textStyle="bold"
             android:textSize="24sp"
             android:layout_gravity="center"
             android:textAllCaps="true"
             android:layout_marginBottom="2dp"/>
-        </LinearLayout>
 
         <androidx.appcompat.widget.SearchView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            android:layout_below="@id/id_header"
+            android:layout_marginStart="9dp"
+            android:layout_marginEnd="10dp"
+            android:layout_below="@id/txtHeader"
             android:id="@+id/search"
             app:iconifiedByDefault="false"
             app:searchHintIcon="@null"
-            app:queryHint="Search using Product Name..."
+            app:queryHint="Search using Product Name/ Assignee..."
             android:focusable="false"
             android:background="@drawable/lavender_border"
             app:closeIcon="@drawable/ic_baseline_clear_24"
@@ -53,7 +43,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:layout_width="match_parent"
             android:layout_height="560dp"
-            android:id="@+id/userRecyclerView"
+            android:id="@+id/goodsRecyclerView"
             android:scrollbars="vertical"
             android:padding="6dp"
             android:layout_marginTop="3dp"
