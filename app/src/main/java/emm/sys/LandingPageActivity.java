@@ -108,6 +108,12 @@ public class LandingPageActivity extends AppCompatActivity {
                             .commit();
                     return true;
 
+
+                case R.id.add_products:
+                    // Navigate to ReceiveInventoryFragment
+                    handleAddProductDetailsNavigation();
+                    return true;
+
                 case R.id.receive_inventory:
                     // Navigate to ReceiveInventoryFragment
                     handleReceiveInventoryNavigation();
@@ -283,6 +289,25 @@ public class LandingPageActivity extends AppCompatActivity {
     }
 
     // .............. HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ..........
+    // Helper method for Receive inventory navigation
+    private void handleAddProductDetailsNavigation() {
+
+        // Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new ProductDetailsFragment())
+                .addToBackStack(null)
+                .commit();
+    }
     // Helper method for Receive inventory navigation
     private void handleReceiveInventoryNavigation() {
 

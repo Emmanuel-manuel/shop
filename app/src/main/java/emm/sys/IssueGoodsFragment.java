@@ -15,6 +15,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
+
 public class IssueGoodsFragment extends Fragment {
 
     // GLOBAL VARIABLES
@@ -28,6 +30,7 @@ public class IssueGoodsFragment extends Fragment {
     private boolean isEditMode = false;
     private int issuedId = -1;
     private int originalQuantity = 0;
+    private int initialBalance = 0; // This will store the current inventory balance
 
     // Store the data to be populated
     private String editAssignee, editProductName, editWeight, editFlavour, editStation;
@@ -151,10 +154,62 @@ public class IssueGoodsFragment extends Fragment {
         // Set station
         txtStation.setText(editStation);
 
-        // Fetch and display current balance for the product
-        fetchProductBalance(editProductName);
+        // Fetch and display CURRENT inventory balance for the product
+        fetchCurrentInventoryBalance(editProductName);
 
         Toast.makeText(getActivity(), "Editing: " + editProductName, Toast.LENGTH_SHORT).show();
+    }
+
+    private void fetchCurrentInventoryBalance(String productName) {
+        // Get the CURRENT balance from inventory table for this product
+        currentBalance = dbHelper.getProductBalance(productName);
+        initialBalance = currentBalance; // Store the initial balance for calculations
+
+        if (currentBalance >= 0) {
+            // Display the current inventory balance
+            txtProductBal.setText(String.valueOf(currentBalance));
+
+            // Calculate and display the updated balance based on the original quantity
+            calculateUpdatedBalanceForEdit();
+
+            enableIssueForm();
+        } else {
+            txtProductBal.setText("0");
+            txtUpdatedBalance.setText("0");
+            Toast.makeText(getActivity(), "No balance found for " + productName, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void calculateUpdatedBalanceForEdit() {
+        String quantityStr = txtQty.getText().toString().trim();
+
+        if (quantityStr.isEmpty()) {
+            // If no quantity entered, show current balance
+            txtUpdatedBalance.setText(String.valueOf(currentBalance));
+            return;
+        }
+
+        try {
+            int newQuantity = Integer.parseInt(quantityStr);
+
+            // NEW LOGIC: initialBalance + (originalQuantity - newQuantity)
+            int updatedBalance = initialBalance + (originalQuantity - newQuantity);
+
+            // Update the new balance display
+            txtUpdatedBalance.setText(String.valueOf(updatedBalance));
+
+            // Change color if balance goes negative
+            if (updatedBalance < 0) {
+                txtUpdatedBalance.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                saveButton.setEnabled(false);
+            } else {
+                txtUpdatedBalance.setTextColor(getResources().getColor(android.R.color.black));
+                saveButton.setEnabled(true);
+            }
+
+        } catch (NumberFormatException e) {
+            txtUpdatedBalance.setText(String.valueOf(currentBalance));
+        }
     }
 
     private void setSpinnerSelection(Spinner spinner, String value) {
@@ -174,22 +229,89 @@ public class IssueGoodsFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedProduct = parent.getItemAtPosition(position).toString();
+                // Check if a valid product is selected (not "Select Product")
                 if (!selectedProduct.equals("Select Product")) {
-                    fetchProductBalance(selectedProduct);
+
+                    // AUTO-POPULATE WEIGHT FEATURE: Check if product exists in TODAY'S inventory
+                    if (dbHelper.productExists(selectedProduct)) {
+                        // Get the weight(s) for this product
+                        List<String> weights = dbHelper.getAllWeightsForProduct(selectedProduct);
+
+                        if (!weights.isEmpty()) {
+                            // Create a new adapter for weights
+                            ArrayAdapter<String> weightAdapter = new ArrayAdapter<>(
+                                    getActivity(),
+                                    android.R.layout.simple_spinner_item,
+                                    weights
+                            );
+                            weightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                            spinnerWeight.setAdapter(weightAdapter);
+
+                            // If there's only one weight, select it automatically
+                            if (weights.size() == 1) {
+                                spinnerWeight.setSelection(0);
+
+                                // Also try to get the weight from today's inventory
+                                String todayWeight = dbHelper.getProductWeight(selectedProduct);
+                                if (todayWeight != null && !todayWeight.isEmpty()) {
+                                    setSpinnerSelection(spinnerWeight, todayWeight);
+                                }
+                            }
+                        }
+                        else {
+                            // No weights found in today's inventory, use default
+                            setupWeightSpinnerDefault();
+                        }
+                    } else {
+                        // Product doesn't exist in today's inventory, use default
+                        setupWeightSpinnerDefault();
+
+                        // Show warning to user
+                        Toast.makeText(getActivity(),
+                                selectedProduct + " was not received today. Please receive it first.",
+                                Toast.LENGTH_SHORT).show();
+
+                        // Disable the form since product wasn't received today
+                        disableIssueForm();
+                    }
+
+                    if (isEditMode) {
+                        // In edit mode, fetch current inventory balance
+                        fetchCurrentInventoryBalance(selectedProduct);
+                    } else {
+                        // In new issue mode, use today's balance
+                        fetchProductBalance(selectedProduct);
+                    }
                     // Only auto-fill product name if not in edit mode or if product name is empty
                     if (!isEditMode || txtProductName.getText().toString().isEmpty()) {
                         txtProductName.setText(selectedProduct);
                     }
                 } else {
-                    resetBalanceFields();
+                    // Reset to default weight spinner when "Select Product" is chosen
+                    setupWeightSpinnerDefault();
+                    resetBalanceFields();enableIssueForm(); // Re-enables form for new selection
+
                 }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+                setupWeightSpinnerDefault();
                 resetBalanceFields();
+                enableIssueForm(); // Re-enable form for new selection
             }
         });
+    }
+
+    // Helper method to reset weight spinner to default
+    private void setupWeightSpinnerDefault() {
+        ArrayAdapter<CharSequence> weightAdapter = ArrayAdapter.createFromResource(
+                getActivity(),
+                R.array.weight_array,
+                android.R.layout.simple_spinner_item
+        );
+        weightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerWeight.setAdapter(weightAdapter);
     }
 
     private void setupTextWatchers() {
@@ -202,7 +324,11 @@ public class IssueGoodsFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                calculateUpdatedBalance();
+                if (isEditMode) {
+                    calculateUpdatedBalanceForEdit();
+                } else {
+                    calculateUpdatedBalance();
+                }
             }
         });
     }
@@ -228,42 +354,60 @@ public class IssueGoodsFragment extends Fragment {
     }
 
     private void fetchProductBalance(String productName) {
-        if (isEditMode) {
-            // In edit mode, use the general product balance (includes previous days)
-            currentBalance = dbHelper.getProductBalance(productName);
-        } else {
-            // In new issue mode, only use today's balance
-            currentBalance = dbHelper.getTodayProductBalance(productName);
+        // In new issue mode, only use today's balance
+        currentBalance = dbHelper.getTodayProductBalance(productName);
 
-            // Check if product was received today
-            if (currentBalance == 0) {
-                boolean productReceivedToday = dbHelper.isProductReceivedToday(productName);
-                if (!productReceivedToday) {
-                    // Product wasn't received today
-                    Toast.makeText(getActivity(), productName + " wasn't received today", Toast.LENGTH_LONG).show();
-                    resetBalanceFields();
-                    disableIssueForm();
-                    return;
-                }
+        // Check if product was received today
+        if (currentBalance == 0) {
+            boolean productReceivedToday = dbHelper.isProductReceivedToday(productName);
+            if (!productReceivedToday) {
+                // Product wasn't received today
+                Toast.makeText(getActivity(), productName + " wasn't received today", Toast.LENGTH_LONG).show();
+                resetBalanceFields();
+                disableIssueForm();
+                return;
             }
         }
 
         if (currentBalance > 0) {
             txtProductBal.setText(String.valueOf(currentBalance));
-            // If in edit mode, calculate updated balance based on current quantity
-            if (isEditMode && !txtQty.getText().toString().isEmpty()) {
-                calculateUpdatedBalance();
-            } else {
-                txtUpdatedBalance.setText(String.valueOf(currentBalance));
-            }
+            txtUpdatedBalance.setText(String.valueOf(currentBalance));
             enableIssueForm();
         } else {
             txtProductBal.setText("0");
             txtUpdatedBalance.setText("0");
-            if (!isEditMode) {
-                Toast.makeText(getActivity(), "No available balance for " + productName, Toast.LENGTH_SHORT).show();
-                disableIssueForm();
+            Toast.makeText(getActivity(), "No available balance for " + productName, Toast.LENGTH_SHORT).show();
+            disableIssueForm();
+        }
+    }
+
+    private void calculateUpdatedBalance() {
+        String quantityStr = txtQty.getText().toString().trim();
+
+        if (quantityStr.isEmpty()) {
+            txtUpdatedBalance.setText(String.valueOf(currentBalance));
+            return;
+        }
+
+        try {
+            int quantity = Integer.parseInt(quantityStr);
+            // In new issue mode, simply subtract from current balance
+            int updatedBalance = currentBalance - quantity;
+
+            // Update the new balance display
+            txtUpdatedBalance.setText(String.valueOf(updatedBalance));
+
+            // Change color if balance goes negative
+            if (updatedBalance < 0) {
+                txtUpdatedBalance.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                saveButton.setEnabled(false);
+            } else {
+                txtUpdatedBalance.setTextColor(getResources().getColor(android.R.color.black));
+                saveButton.setEnabled(true);
             }
+
+        } catch (NumberFormatException e) {
+            txtUpdatedBalance.setText(String.valueOf(currentBalance));
         }
     }
 
@@ -292,43 +436,6 @@ public class IssueGoodsFragment extends Fragment {
         spinnerAssignee.setEnabled(true);
         spinnerWeight.setEnabled(true);
         spinnerFlavour.setEnabled(true);
-    }
-
-    private void calculateUpdatedBalance() {
-        String quantityStr = txtQty.getText().toString().trim();
-
-        if (quantityStr.isEmpty()) {
-            txtUpdatedBalance.setText(String.valueOf(currentBalance));
-            return;
-        }
-
-        try {
-            int quantity = Integer.parseInt(quantityStr);
-            int updatedBalance;
-
-            if (isEditMode) {
-                // In edit mode, we need to account for the original quantity
-                updatedBalance = currentBalance + originalQuantity - quantity;
-            } else {
-                // In new issue mode, simply subtract from current balance
-                updatedBalance = currentBalance - quantity;
-            }
-
-            // Update the new balance display
-            txtUpdatedBalance.setText(String.valueOf(updatedBalance));
-
-            // Change color if balance goes negative
-            if (updatedBalance < 0) {
-                txtUpdatedBalance.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-                saveButton.setEnabled(false);
-            } else {
-                txtUpdatedBalance.setTextColor(getResources().getColor(android.R.color.black));
-                saveButton.setEnabled(true);
-            }
-
-        } catch (NumberFormatException e) {
-            txtUpdatedBalance.setText(String.valueOf(currentBalance));
-        }
     }
 
     private void issueGoods() {
@@ -385,16 +492,20 @@ public class IssueGoodsFragment extends Fragment {
         }
 
         int newQuantity = Integer.parseInt(quantityStr);
-        int newBalance = Integer.parseInt(updatedBalanceStr);
+        int displayedBalance = Integer.parseInt(updatedBalanceStr);
 
-        // Update the issued goods record
-        boolean isUpdated = dbHelper.updateIssuedGoodsWithBalance(
+        // NEW LOGIC: Use the calculated balance directly
+        // The displayedBalance is already calculated as: initialBalance + (originalQuantity - newQuantity)
+        int actualNewBalance = displayedBalance;
+
+        // Update the issued goods record with the new logic
+        boolean isUpdated = dbHelper.updateIssuedGoodsWithNewLogic(
                 issuedId, assignee, productName, weight, flavour,
-                originalQuantity, newQuantity, station, currentBalance
+                originalQuantity, newQuantity, station, actualNewBalance
         );
 
         if (isUpdated) {
-            String message = "Issued goods updated successfully! New balance: " + newBalance;
+            String message = "Issued goods updated successfully! New balance: " + actualNewBalance;
             Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
 
             // Go back to previous fragment
@@ -463,6 +574,7 @@ public class IssueGoodsFragment extends Fragment {
         txtProductBal.setText("");
         txtUpdatedBalance.setText("");
         currentBalance = 0;
+        initialBalance = 0;
     }
 
     private void clearForm() {
@@ -471,10 +583,12 @@ public class IssueGoodsFragment extends Fragment {
         txtStation.setText("");
         spinnerAssignee.setSelection(0);
         spinnerProduct.setSelection(0);
-        spinnerWeight.setSelection(0);
+        // Reset weight spinner to default
+        setupWeightSpinnerDefault();
+
         spinnerFlavour.setSelection(0);
         resetBalanceFields();
-        enableIssueForm(); // Make sure form is enabled when cleared
+        enableIssueForm(); // Makes sure form is enabled when cleared
     }
 
     @Override

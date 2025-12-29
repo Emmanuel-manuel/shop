@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 //import androidx.annotation.Nullable;
 
 public class DBHelper extends SQLiteOpenHelper {
@@ -14,7 +17,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
 
-        super(context, "Shop.db", null, 5);
+        super(context, "Shop.db", null, 6);
     }
 
     @Override
@@ -23,6 +26,15 @@ public class DBHelper extends SQLiteOpenHelper {
     // ......... METHODS FOR CREATING NEW TABLES IN THE DB ...............
         // Create users table
         db.execSQL("create Table users(role TEXT, email TEXT primary key, password TEXT)");
+
+        // Create product_details table
+        db.execSQL("CREATE TABLE product_details(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "product_name TEXT," +
+                "weight TEXT," +
+                "flavour TEXT," +
+                "price INTEGER," +
+                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
         // Create inventory table
         db.execSQL("CREATE TABLE inventory(" +
@@ -60,6 +72,15 @@ public class DBHelper extends SQLiteOpenHelper {
         if (oldVersion < 5) {
             // Add station column to issue_goods table
             db.execSQL("ALTER TABLE issue_goods ADD COLUMN station TEXT DEFAULT ''");
+        }if (oldVersion < 6) {
+            // Create product_details table if upgrading from older version
+            db.execSQL("CREATE TABLE IF NOT EXISTS product_details(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "product_name TEXT," +
+                    "weight TEXT," +
+                    "flavour TEXT," +
+                    "price INTEGER," +
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
         }
     }
 
@@ -72,6 +93,19 @@ public class DBHelper extends SQLiteOpenHelper {
         contentValues.put("email", email);
         contentValues.put("password", password);
         long result = LoginDetails.insert("users", null, contentValues);
+        return result != -1;
+    }
+
+    // ============ Method to insert product details ============
+    public boolean insertProductDetails(String productName, String weight, String flavour, int price) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("product_name", productName);
+        values.put("weight", weight);
+        values.put("flavour", flavour);
+        values.put("price", price);
+
+        long result = db.insert("product_details", null, values);
         return result != -1;
     }
 
@@ -348,6 +382,151 @@ public class DBHelper extends SQLiteOpenHelper {
 
         return exists;
     }
+
+    // ============ Method to update issued goods with the new balance calculation logic ============
+    public boolean updateIssuedGoodsWithNewLogic(int id, String assignee, String productName, String weight,
+                                                 String flavour, int oldQuantity, int newQuantity,
+                                                 String station, int newBalance) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.beginTransaction();
+        try {
+            // Update inventory balance with the new balance value
+            boolean balanceUpdated = updateInventoryBalance(productName, newBalance);
+
+            if (balanceUpdated) {
+                // Update issued goods record
+                ContentValues values = new ContentValues();
+                values.put("assignee", assignee);
+                values.put("product_name", productName);
+                values.put("weight", weight);
+                values.put("flavour", flavour);
+                values.put("quantity", newQuantity);
+                values.put("station", station);
+
+                int rowsAffected = db.update("issue_goods", values, "id = ?", new String[]{String.valueOf(id)});
+                if (rowsAffected > 0) {
+                    db.setTransactionSuccessful();
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+
+    // ============ Method to get weight for a product from today's inventory ============
+    public String getProductWeight(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String weight = null;
+
+        Cursor cursor = db.rawQuery(
+                "SELECT weight FROM inventory WHERE product_name = ? AND date(timestamp) = date('now') LIMIT 1",
+                new String[]{productName}
+        );
+
+        if (cursor.moveToFirst()) {
+            weight = cursor.getString(0);
+        }
+        cursor.close();
+
+        return weight;
+    }
+
+    // ============ Method to check if product exists in database (today) ============
+    public boolean productExists(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM inventory WHERE product_name = ? AND date(timestamp) = date('now') LIMIT 1",
+                new String[]{productName}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+
+        return exists;
+    }
+
+    // ============ Method to get all unique weights for a product ============
+    public List<String> getAllWeightsForProduct(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> weights = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT weight FROM inventory WHERE product_name = ? AND date(timestamp) = date('now') ORDER BY weight",
+                new String[]{productName}
+        );
+
+        while (cursor.moveToNext()) {
+            weights.add(cursor.getString(0));
+        }
+        cursor.close();
+
+        return weights;
+    }
+
+
+
+    // ============ NEW METHOD: Check if product details already exist ============
+    public boolean checkProductDetailsExists(String productName, String weight, String flavour) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM product_details WHERE " +
+                "product_name = ? AND " +
+                "weight = ? AND " +
+                "flavour = ?";
+
+        Cursor cursor = db.rawQuery(query, new String[]{productName, weight, flavour});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    // ============ NEW METHOD: Get all product details ============
+    public Cursor getAllProductDetails() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM product_details ORDER BY product_name", null);
+    }
+
+    // ============ NEW METHOD: Get product by name ============
+    public Cursor getProductByName(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM product_details WHERE product_name = ?",
+                new String[]{productName});
+    }
+
+    // ============ NEW METHOD: Update product price ============
+    public boolean updateProductPrice(String productName, String weight, String flavour, int newPrice) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("price", newPrice);
+
+        int rowsAffected = db.update("product_details", values,
+                "product_name = ? AND weight = ? AND flavour = ?",
+                new String[]{productName, weight, flavour});
+        return rowsAffected > 0;
+    }
+
+
+    // Optional: Added this method in-case programmer wants to check product existence at any time
+    public boolean productExistsAnyTime(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM inventory WHERE product_name = ? LIMIT 1",
+                new String[]{productName}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+
+        return exists;
+    }
+
+
+
 
 
 
