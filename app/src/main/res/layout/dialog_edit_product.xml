@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editProductName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Product Name"
+        android:inputType="text"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/editWeight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Weight"
+        android:inputType="text"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/editFlavour"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Flavour"
+        android:inputType="text"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/editPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Price"
+        android:inputType="number"
+        android:layout_marginBottom="8dp"/>
+
+</LinearLayout>

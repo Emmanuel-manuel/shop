@@ -5,6 +5,7 @@
     <color name="purple_700">#F7935F9C</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
+    <color name="primary">#FF000000</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="light_grey">#CCCCCC</color>
@@ -21,4 +22,16 @@
     <color name="background">#F5F5F5</color>
     <color name="card_background">#EDEDED</color>
 
+
+
+
+
+    <!-- Add these color codes -->
+    <color name="primary_light">#E3F2FD</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="secondary">#4CAF50</color>
+    <color name="accent">#FF9800</color>
+    <color name="gray">#757575</color>
+    <color name="light_gray">#BDBDBD</color>
+    <color name="error">#F44336</color>
 </resources>

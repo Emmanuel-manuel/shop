@@ -30,6 +30,10 @@
     <item android:title="Details">
         <menu>
             <group android:checkableBehavior="single">
+                <item android:id="@+id/productDetails"
+                    android:icon="@drawable/ic_view_products_details"
+                    android:title="View Product Details"
+                    />
                 <item android:id="@+id/inventoryDetails"
                     android:icon="@drawable/ic_baseline_inventory_24"
                     android:title="View Today's Inventory Details"

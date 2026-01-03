@@ -129,6 +129,12 @@ public class LandingPageActivity extends AppCompatActivity {
                     // Handle settings
                     return true;
 
+
+                case R.id.productDetails:
+                    // Handle View Today's inventory details
+                    handleViewProductDetailsNavigation();
+                    return true;
+
                 case R.id.inventoryDetails:
                     // Handle View Today's inventory details
                     handleViewTodayInventoryNavigation();
@@ -290,7 +296,7 @@ public class LandingPageActivity extends AppCompatActivity {
 
     // .............. HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ..........
     // Helper method for Receive inventory navigation
-    private void handleAddProductDetailsNavigation() {
+    void handleAddProductDetailsNavigation() {
 
         // Clear BottomNavigationView selection
         bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
@@ -324,6 +330,25 @@ public class LandingPageActivity extends AppCompatActivity {
                         R.anim.fragment_enter,
                         R.anim.fragment_exit)
                 .replace(R.id.fragmentContainer, new ReceiveInventoryFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+    // Helper method for View Product Details navigation
+    public void handleViewProductDetailsNavigation() {
+
+        // Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new ViewProductsDetailsFragment())
                 .addToBackStack(null)
                 .commit();
     }

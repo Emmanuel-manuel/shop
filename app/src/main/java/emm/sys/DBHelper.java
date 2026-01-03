@@ -525,6 +525,34 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    // ============ Method to delete a product ============
+    public boolean deleteProduct(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int rowsAffected = db.delete("product_details", "id = ?", new String[]{String.valueOf(id)});
+        return rowsAffected > 0;
+    }
+
+    // ============ Method to update all product fields ============
+    public boolean updateProductDetails(int id, String productName, String weight,
+                                        String flavour, int price) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("product_name", productName);
+        values.put("weight", weight);
+        values.put("flavour", flavour);
+        values.put("price", price);
+
+        int rowsAffected = db.update("product_details", values, "id = ?",
+                new String[]{String.valueOf(id)});
+        return rowsAffected > 0;
+    }
+
+    // ============ Method to delete all products ============
+    public boolean deleteAllProducts() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int rowsAffected = db.delete("product_details", null, null);
+        return rowsAffected > 0;
+    }
 
 
 
