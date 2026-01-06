@@ -554,6 +554,24 @@ public class DBHelper extends SQLiteOpenHelper {
         return rowsAffected > 0;
     }
 
+    // ============ Method to get all unique product names from product_details table ============
+    public List<String> getAllProductNames() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> productNames = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT product_name FROM product_details ORDER BY product_name",
+                null
+        );
+
+        while (cursor.moveToNext()) {
+            productNames.add(cursor.getString(0));
+        }
+        cursor.close();
+
+        return productNames;
+    }
+
 
 
 
