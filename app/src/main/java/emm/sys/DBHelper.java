@@ -600,6 +600,14 @@ public class DBHelper extends SQLiteOpenHelper {
         );
     }
 
+//    =============== Method for date filtering in ViewIssuedGoodsFragment ===========
+public Cursor getIssuedGoodsByDate(String date) {
+    SQLiteDatabase db = this.getReadableDatabase();
+    return db.rawQuery("SELECT * FROM issue_goods WHERE date(timestamp) = ? ORDER BY timestamp DESC",
+            new String[]{date});
+}
+
+
 
 
 

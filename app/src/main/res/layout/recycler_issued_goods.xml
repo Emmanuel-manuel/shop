@@ -1,142 +1,225 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/issuedView"
+    android:id="@+id/itemView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="4dp"
-    android:layout_marginVertical="2dp"
+    android:layout_marginVertical="4dp"
     app:cardCornerRadius="12dp"
-    android:orientation="vertical"
-    app:cardElevation="4dp">
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/surface">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="16dp">
 
-        <!-- First Row: Product Name and Weight -->
+        <!-- Main Header Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="2">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
 
-            <TextView
-                android:id="@+id/txtAssigneeName"
+            <!-- Icon -->
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_share"
+                android:layout_marginEnd="12dp"
+                app:tint="@color/primary" />
+
+            <!-- Product and Assignee Details -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Assignee Name"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:maxLines="1"
-                android:ellipsize="end"/>
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/txtStation"
+                <TextView
+                    android:id="@+id/txtProductName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Product Name"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/on_surface"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+                <TextView
+                    android:id="@+id/txtAssigneeName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Assignee"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary"
+                    android:layout_marginTop="2dp"/>
+            </LinearLayout>
+
+            <!-- Quantity Badge -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end"
+                android:background="@drawable/quantity_badge_bg"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp">
+
+                <TextView
+                    android:id="@+id/txtQty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="pieces"
+                    android:textSize="10sp"
+                    android:textColor="@color/white"
+                    android:alpha="0.9"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Details Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <!-- Station -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Station"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:maxLines="1"
-                android:ellipsize="end"/>
+                android:orientation="vertical">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Station"
+                    android:textSize="12sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:layout_marginBottom="2dp"/>
+
+                <TextView
+                    android:id="@+id/txtStation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Station Name"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface"/>
+            </LinearLayout>
+
+            <!-- Product Details -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Product Details"
+                    android:textSize="12sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:layout_marginBottom="2dp"/>
+
+                <TextView
+                    android:id="@+id/txtProductDetails"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Weight | Flavour"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface"/>
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Second Row: Product, Weight, Flavour and Quantity -->
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/on_surface_variant"
+            android:alpha="0.1"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Footer Row with Time and Actions -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="2"
-            android:layout_marginTop="8dp">
+            android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/txtProductName"
+            <!-- Time -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:text="Product Name"
-                android:textSize="14sp"/>
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/txtWeight"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.37"
-                android:text="Weight"
-                android:textSize="14sp"/>
-            <TextView
-                android:id="@+id/txtFlavour"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.4"
-                android:text="Flavour/Type"
-                android:textSize="14sp"/>
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
 
-            <TextView
-                android:id="@+id/txtIssued"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.3"
-                android:text="Issued:"
-                android:textColor="@color/black"
-                android:textSize="14sp"
-                android:gravity="end"/>
-            <TextView
-                android:id="@+id/txtQty"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.18"
-                android:text="Quantity"
-                android:textSize="14sp"
-                android:gravity="end"/>
-            <TextView
-                android:id="@+id/txtPcs"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.25"
-                android:text="Pieces"
-                android:textSize="14sp"
-                android:gravity="end"/>
-        </LinearLayout>
+                    android:layout_marginEnd="4dp"
+                    app:tint="@color/on_surface_variant" />
 
-        <!-- Third Row: Action Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="end"
-            android:layout_marginTop="8dp">
+                <TextView
+                    android:id="@+id/txtTimestamp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Today 10:30"
+                    android:textSize="12sp"
+                    android:textColor="@color/on_surface_variant"/>
+            </LinearLayout>
 
-            <Button
-                android:id="@+id/btnEdit"
+            <!-- Action Buttons -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit"
-                android:textSize="12sp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:layout_marginEnd="8dp"
-                android:backgroundTint="@color/green"/>
+                android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/btnDelete"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Delete"
-                android:textSize="12sp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:backgroundTint="@color/holo_red_dark"/>
+                <!-- Edit Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEdit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Edit"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_edit"
+                    app:iconSize="14dp"
+                    app:iconPadding="2dp"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="@color/primary"
+                    app:strokeWidth="1dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_marginEnd="8dp"/>
 
+                <!-- Delete Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDelete"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Delete"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_delete"
+                    app:iconSize="14dp"
+                    app:iconPadding="2dp"
+                    app:cornerRadius="8dp"
+                    app:backgroundTint="@color/error"
+                    android:textColor="@color/white"/>
+            </LinearLayout>
         </LinearLayout>
-
-
     </LinearLayout>
 </androidx.cardview.widget.CardView>
