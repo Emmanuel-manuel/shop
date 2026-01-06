@@ -15,6 +15,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class IssueGoodsFragment extends Fragment {
@@ -35,6 +36,8 @@ public class IssueGoodsFragment extends Fragment {
     // Store the data to be populated
     private String editAssignee, editProductName, editWeight, editFlavour, editStation;
     private int editQuantity;
+
+    private List<String> availableProducts = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -81,14 +84,8 @@ public class IssueGoodsFragment extends Fragment {
         assigneeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerAssignee.setAdapter(assigneeAdapter);
 
-        // Setup product spinner
-        ArrayAdapter<CharSequence> productAdapter = ArrayAdapter.createFromResource(
-                getActivity(),
-                R.array.product_array,
-                android.R.layout.simple_spinner_item
-        );
-        productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerProduct.setAdapter(productAdapter);
+        // Setup product spinner - get products from inventory with available balance
+        setupProductSpinner();
 
         // Setup weight spinner
         ArrayAdapter<CharSequence> weightAdapter = ArrayAdapter.createFromResource(
@@ -107,6 +104,28 @@ public class IssueGoodsFragment extends Fragment {
         );
         flavourAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFlavour.setAdapter(flavourAdapter);
+    }
+
+    private void setupProductSpinner() {
+        // Get products with available balance from inventory
+        availableProducts = dbHelper.getProductsWithAvailableBalance();
+
+        if (availableProducts.isEmpty()) {
+            // No products available in inventory
+            availableProducts.add("No products in inventory");
+        } else {
+            // Add "Select Product" as first item
+            availableProducts.add(0, "Select Product");
+        }
+
+        // Create adapter
+        ArrayAdapter<String> productAdapter = new ArrayAdapter<>(
+                getActivity(),
+                android.R.layout.simple_spinner_item,
+                availableProducts
+        );
+        productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerProduct.setAdapter(productAdapter);
     }
 
     private void checkEditMode() {
@@ -138,7 +157,7 @@ public class IssueGoodsFragment extends Fragment {
         // Set assignee spinner
         setSpinnerSelection(spinnerAssignee, editAssignee);
 
-        // Set product name
+        // Set product name in text field (not in spinner for edit mode)
         txtProductName.setText(editProductName);
 
         // Set weight spinner
@@ -228,60 +247,63 @@ public class IssueGoodsFragment extends Fragment {
         spinnerProduct.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (availableProducts.isEmpty() || availableProducts.get(0).equals("No products in inventory")) {
+                    // No products available
+                    Toast.makeText(getActivity(), "No products available in inventory", Toast.LENGTH_SHORT).show();
+                    disableIssueForm();
+                    return;
+                }
+
                 String selectedProduct = parent.getItemAtPosition(position).toString();
+
                 // Check if a valid product is selected (not "Select Product")
-                if (!selectedProduct.equals("Select Product")) {
+                if (!selectedProduct.equals("Select Product") && !selectedProduct.equals("No products in inventory")) {
 
-                    // AUTO-POPULATE WEIGHT FEATURE: Check if product exists in TODAY'S inventory
-                    if (dbHelper.productExists(selectedProduct)) {
-                        // Get the weight(s) for this product
-                        List<String> weights = dbHelper.getAllWeightsForProduct(selectedProduct);
+                    // Get product details from inventory
+                    android.database.Cursor cursor = dbHelper.getInventoryProductDetails(selectedProduct);
 
-                        if (!weights.isEmpty()) {
-                            // Create a new adapter for weights
-                            ArrayAdapter<String> weightAdapter = new ArrayAdapter<>(
-                                    getActivity(),
-                                    android.R.layout.simple_spinner_item,
-                                    weights
-                            );
-                            weightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                            spinnerWeight.setAdapter(weightAdapter);
+                    if (cursor != null && cursor.moveToFirst()) {
+                        try {
+                            // Get weight, flavour, and balance from inventory
+                            String weight = cursor.getString(cursor.getColumnIndexOrThrow("weight"));
+                            String flavour = cursor.getString(cursor.getColumnIndexOrThrow("flavour"));
+                            int balance = cursor.getInt(cursor.getColumnIndexOrThrow("balance"));
 
-                            // If there's only one weight, select it automatically
-                            if (weights.size() == 1) {
-                                spinnerWeight.setSelection(0);
-
-                                // Also try to get the weight from today's inventory
-                                String todayWeight = dbHelper.getProductWeight(selectedProduct);
-                                if (todayWeight != null && !todayWeight.isEmpty()) {
-                                    setSpinnerSelection(spinnerWeight, todayWeight);
-                                }
+                            // Auto-select weight in spinner
+                            ArrayAdapter adapter = (ArrayAdapter) spinnerWeight.getAdapter();
+                            int weightPosition = adapter.getPosition(weight);
+                            if (weightPosition >= 0) {
+                                spinnerWeight.setSelection(weightPosition);
                             }
-                        }
-                        else {
-                            // No weights found in today's inventory, use default
+
+                            // Auto-select flavour in spinner
+                            adapter = (ArrayAdapter) spinnerFlavour.getAdapter();
+                            int flavourPosition = adapter.getPosition(flavour);
+                            if (flavourPosition >= 0) {
+                                spinnerFlavour.setSelection(flavourPosition);
+                            }
+
+                            // Set current balance
+                            currentBalance = balance;
+                            txtProductBal.setText(String.valueOf(currentBalance));
+                            txtUpdatedBalance.setText(String.valueOf(currentBalance));
+
+                            // Enable form
+                            enableIssueForm();
+
+                        } catch (Exception e) {
+                            // Couldn't get details, use default
                             setupWeightSpinnerDefault();
+                            fetchProductBalance(selectedProduct);
+                        } finally {
+                            cursor.close();
                         }
                     } else {
-                        // Product doesn't exist in today's inventory, use default
+                        // No details found, use default
                         setupWeightSpinnerDefault();
-
-                        // Show warning to user
-                        Toast.makeText(getActivity(),
-                                selectedProduct + " was not received today. Please receive it first.",
-                                Toast.LENGTH_SHORT).show();
-
-                        // Disable the form since product wasn't received today
-                        disableIssueForm();
-                    }
-
-                    if (isEditMode) {
-                        // In edit mode, fetch current inventory balance
-                        fetchCurrentInventoryBalance(selectedProduct);
-                    } else {
-                        // In new issue mode, use today's balance
                         fetchProductBalance(selectedProduct);
                     }
+
                     // Only auto-fill product name if not in edit mode or if product name is empty
                     if (!isEditMode || txtProductName.getText().toString().isEmpty()) {
                         txtProductName.setText(selectedProduct);
@@ -289,8 +311,8 @@ public class IssueGoodsFragment extends Fragment {
                 } else {
                     // Reset to default weight spinner when "Select Product" is chosen
                     setupWeightSpinnerDefault();
-                    resetBalanceFields();enableIssueForm(); // Re-enables form for new selection
-
+                    resetBalanceFields();
+                    enableIssueForm(); // Re-enables form for new selection
                 }
             }
 
@@ -354,29 +376,35 @@ public class IssueGoodsFragment extends Fragment {
     }
 
     private void fetchProductBalance(String productName) {
-        // In new issue mode, only use today's balance
-        currentBalance = dbHelper.getTodayProductBalance(productName);
+        // Get product details from inventory
+        android.database.Cursor cursor = dbHelper.getInventoryProductDetails(productName);
 
-        // Check if product was received today
-        if (currentBalance == 0) {
-            boolean productReceivedToday = dbHelper.isProductReceivedToday(productName);
-            if (!productReceivedToday) {
-                // Product wasn't received today
-                Toast.makeText(getActivity(), productName + " wasn't received today", Toast.LENGTH_LONG).show();
-                resetBalanceFields();
+        if (cursor != null && cursor.moveToFirst()) {
+            try {
+                currentBalance = cursor.getInt(cursor.getColumnIndexOrThrow("balance"));
+
+                if (currentBalance > 0) {
+                    txtProductBal.setText(String.valueOf(currentBalance));
+                    txtUpdatedBalance.setText(String.valueOf(currentBalance));
+                    enableIssueForm();
+                } else {
+                    txtProductBal.setText("0");
+                    txtUpdatedBalance.setText("0");
+                    Toast.makeText(getActivity(), "No available balance for " + productName, Toast.LENGTH_SHORT).show();
+                    disableIssueForm();
+                }
+            } catch (Exception e) {
+                txtProductBal.setText("0");
+                txtUpdatedBalance.setText("0");
+                Toast.makeText(getActivity(), "Error fetching balance for " + productName, Toast.LENGTH_SHORT).show();
                 disableIssueForm();
-                return;
+            } finally {
+                cursor.close();
             }
-        }
-
-        if (currentBalance > 0) {
-            txtProductBal.setText(String.valueOf(currentBalance));
-            txtUpdatedBalance.setText(String.valueOf(currentBalance));
-            enableIssueForm();
         } else {
             txtProductBal.setText("0");
             txtUpdatedBalance.setText("0");
-            Toast.makeText(getActivity(), "No available balance for " + productName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Product not found in inventory: " + productName, Toast.LENGTH_SHORT).show();
             disableIssueForm();
         }
     }
@@ -471,6 +499,8 @@ public class IssueGoodsFragment extends Fragment {
             String message = "Goods issued successfully! New balance: " + newBalance;
             Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
             clearForm();
+            // Refresh product spinner after issuing goods
+            setupProductSpinner();
         } else {
             Toast.makeText(getActivity(), "Failed to issue goods", Toast.LENGTH_SHORT).show();
         }
@@ -508,6 +538,9 @@ public class IssueGoodsFragment extends Fragment {
             String message = "Issued goods updated successfully! New balance: " + actualNewBalance;
             Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
 
+            // Refresh product spinner after update
+            setupProductSpinner();
+
             // Go back to previous fragment
             getParentFragmentManager().popBackStack();
         } else {
@@ -525,7 +558,7 @@ public class IssueGoodsFragment extends Fragment {
         if (productName.isEmpty()) {
             productName = spinnerProduct.getSelectedItem().toString();
         }
-        if (productName.isEmpty()||productName.equals("Select Product")) {
+        if (productName.isEmpty() || productName.equals("Select Product") || productName.equals("No products in inventory")) {
             txtProductName.setError("Product name is required");
             Toast.makeText(getActivity(), "Please enter or select a Product", Toast.LENGTH_SHORT).show();
             txtProductName.requestFocus();
@@ -561,6 +594,15 @@ public class IssueGoodsFragment extends Fragment {
                 txtQty.setError("Quantity must be positive");
                 return false;
             }
+
+            // Check if quantity exceeds available balance (only for new issues, not edits)
+            if (!isEditMode && quantity > currentBalance) {
+                txtQty.setError("Quantity exceeds available balance");
+                Toast.makeText(getActivity(),
+                        "Available balance: " + currentBalance + ", Requested: " + quantity,
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
         } catch (NumberFormatException e) {
             txtQty.setError("Enter a valid number");
             txtQty.requestFocus();
@@ -589,6 +631,13 @@ public class IssueGoodsFragment extends Fragment {
         spinnerFlavour.setSelection(0);
         resetBalanceFields();
         enableIssueForm(); // Makes sure form is enabled when cleared
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh product list when fragment is resumed
+        setupProductSpinner();
     }
 
     @Override

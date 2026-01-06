@@ -572,6 +572,33 @@ public class DBHelper extends SQLiteOpenHelper {
         return productNames;
     }
 
+    // ============ Method to get all products with available balance from inventory ============
+    public List<String> getProductsWithAvailableBalance() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> products = new ArrayList<>();
+
+        // Get distinct product names where balance > 0 (ordered by product_name)
+        Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT product_name FROM inventory WHERE balance > 0 ORDER BY product_name",
+                null
+        );
+
+        while (cursor.moveToNext()) {
+            products.add(cursor.getString(0));
+        }
+        cursor.close();
+
+        return products;
+    }
+
+    // ============ Method to get weight and flavour for a product from inventory tables ============
+    public Cursor getInventoryProductDetails(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT weight, flavour, balance FROM inventory WHERE product_name = ? AND balance > 0 ORDER BY timestamp DESC LIMIT 1",
+                new String[]{productName}
+        );
+    }
 
 
 

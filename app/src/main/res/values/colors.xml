@@ -50,6 +50,7 @@
     <color name="outline">#79747E</color>  <!-- For borders/outlines -->
     <color name="error">#BA1A1A</color>  <!-- For error states -->
     <color name="on_error">#FFFFFF</color>  <!-- Text on error background -->
+    <color name="success">#4CAF50</color>  <!-- Material Green 500 -->
     <color name="primary_container">#EADDFF</color>  <!-- Primary container -->
     <color name="on_primary_container">#21005D</color>  <!-- Text on primary container -->
 
