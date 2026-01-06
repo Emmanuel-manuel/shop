@@ -65,7 +65,8 @@ public class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.View
             txtWeight = itemView.findViewById(R.id.txtWeight);
             txtFlavour = itemView.findViewById(R.id.txtFlavour);
             txtQty = itemView.findViewById(R.id.txtQty);
-            txtBal = itemView.findViewById(R.id.txtBal);
+//            txtBal = itemView.findViewById(R.id.txtBal);
+            txtBal = itemView.findViewById(R.id.txtBalance);
         }
     }
 }

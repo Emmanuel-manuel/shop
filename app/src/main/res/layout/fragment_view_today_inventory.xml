@@ -1,66 +1,234 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ViewTodayInventoryFragment">
+    tools:context=".ViewTodayInventoryFragment"
+    android:background="@color/background">
 
-
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <!-- First Row: Product Name and Weight -->
-        <LinearLayout
+        <!-- Header Card -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/id_header"
-            android:weightSum="2">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/surface">
 
-        <TextView
-            android:id="@+id/txtHeader"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="View Inventory"
-            android:layout_weight="1.5"
-            android:layout_marginStart="14dp"
-            android:textStyle="bold"
-            android:textSize="24sp"
-            android:layout_gravity="center"
-            android:textAllCaps="true"
-            android:layout_marginBottom="2dp"/>
-        </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
 
-        <androidx.appcompat.widget.SearchView
+                <TextView
+                    android:id="@+id/txtHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📦 TODAY'S INVENTORY"
+                    android:textStyle="bold"
+                    android:textSize="22sp"
+                    android:textColor="@color/primary"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="View and search today's stock"
+                    android:textSize="14sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:gravity="center"/>
+
+                <View
+                    android:layout_width="100dp"
+                    android:layout_height="3dp"
+                    android:background="@color/primary"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="12dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Search Card -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
-            android:layout_below="@id/id_header"
-            android:id="@+id/search"
-            app:iconifiedByDefault="false"
-            app:searchHintIcon="@null"
-            app:queryHint="Search using Product Name..."
-            android:focusable="false"
-            android:background="@drawable/lavender_border"
-            app:closeIcon="@drawable/ic_baseline_clear_24"
-            app:searchIcon="@drawable/ic_baseline_search_24"/>
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/surface">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
 
-        <androidx.recyclerview.widget.RecyclerView
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔍 Search Inventory"
+                    android:textSize="14sp"
+                    android:textColor="@color/on_surface"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <androidx.appcompat.widget.SearchView
+                    android:id="@+id/search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:iconifiedByDefault="false"
+                    app:searchHintIcon="@null"
+                    app:queryHint="Search by product name..."
+                    android:focusable="true"
+                    app:closeIcon="@drawable/ic_baseline_clear_24"
+                    app:searchIcon="@drawable/ic_baseline_search_24"
+                    android:background="@drawable/searchview_bg"/>
+
+                <!-- Summary Stats -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/txtTotalItems"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Total: 0 items"
+                        android:textSize="12sp"
+                        android:textColor="@color/on_surface_variant"
+                        android:gravity="center"/>
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="12dp"
+                        android:background="@color/on_surface_variant"
+                        android:alpha="0.3"/>
+
+                    <TextView
+                        android:id="@+id/txtLastUpdated"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Updated: Today"
+                        android:textSize="12sp"
+                        android:textColor="@color/on_surface_variant"
+                        android:gravity="center"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Inventory List -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="560dp"
-            android:id="@+id/userRecyclerView"
-            android:scrollbars="vertical"
-            android:padding="6dp"
-            android:layout_marginTop="3dp"
-            android:clipToPadding="false"
-            android:layout_below="@+id/search"/>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/surface">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
+                <!-- List Header -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:orientation="horizontal"
+                    android:background="@color/secondary_container"
+                    android:paddingHorizontal="16dp"
+                    android:gravity="center_vertical">
 
-    </RelativeLayout>
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:text="Product"
+                        android:textSize="13sp"
+                        android:textColor="@color/on_secondary_container"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Stock"
+                        android:textSize="13sp"
+                        android:textColor="@color/on_secondary_container"
+                        android:textStyle="bold"
+                        android:gravity="end"/>
+                </LinearLayout>
+
+                <!-- RecyclerView -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/userRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:scrollbars="vertical"
+                    android:padding="8dp"
+                    android:clipToPadding="false"/>
+
+                <!-- Empty State -->
+                <LinearLayout
+                    android:id="@+id/emptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="40dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:src="@android:drawable/ic_menu_report_image"
+                        android:layout_marginBottom="16dp"
+                        app:tint="@color/on_surface_variant" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No inventory found"
+                        android:textSize="16sp"
+                        android:textColor="@color/on_surface"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Add inventory to get started"
+                        android:textSize="14sp"
+                        android:textColor="@color/on_surface_variant"
+                        android:gravity="center"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Refresh Button -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabRefresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:layout_margin="16dp"
+            android:src="@android:drawable/ic_popup_sync"
+            app:backgroundTint="@color/primary"
+            app:tint="@color/white"
+            app:elevation="8dp"/>
+    </LinearLayout>
 </FrameLayout>

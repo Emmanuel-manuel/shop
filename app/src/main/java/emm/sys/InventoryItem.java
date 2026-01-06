@@ -33,4 +33,11 @@ public class InventoryItem {
     public void setQuantity(int quantity) { this.quantity = quantity; }
     public void setBalance(int balance) { this.balance = balance; }
     public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
+
+    private boolean isLowStock;
+
+    // Add this method
+    public boolean isLowStock() {
+        return balance <= 5; // Example: low stock if balance is 5 or less
+    }
 }
