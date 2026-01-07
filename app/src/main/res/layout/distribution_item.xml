@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:layout_marginBottom="4dp">
+
+    <TextView
+        android:id="@+id/txtProductName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Product Name"
+        android:textSize="14sp"
+        android:textColor="@color/on_surface"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/txtInventory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Inventory: 100"
+            android:textSize="12sp"
+            android:textColor="@color/primary"
+            android:layout_marginEnd="12dp"/>
+
+        <TextView
+            android:id="@+id/txtIssued"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Issued: 50"
+            android:textSize="12sp"
+            android:textColor="@color/success"/>
+    </LinearLayout>
+</LinearLayout>

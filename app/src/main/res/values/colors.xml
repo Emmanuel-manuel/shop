@@ -5,7 +5,7 @@
     <color name="purple_700">#F7935F9C</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
-    <color name="primary">#FF000000</color>
+    <color name="primary">#2196F3</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="light_grey">#CCCCCC</color>
@@ -41,7 +41,7 @@
     <!-- Material Design 3 Colors for Light Theme -->
     <color name="surface">#FFFFFF</color>  <!-- White surface for cards -->
     <color name="on_surface">#1C1B1F</color>  <!-- Dark gray for text on surface -->
-    <color name="on_surface_variant">#49454F</color>  <!-- Medium gray for secondary text -->
+    <color name="on_surface_variant">#757575</color>  <!-- Medium gray for secondary text -->
 
     <color name="secondary_container">#E8DEF8</color>  <!-- Light purple container -->
     <color name="on_secondary_container">#21005D</color>  <!-- Dark purple text on container -->
@@ -65,4 +65,21 @@
     <color name="on_surface_variant_dark">#CAC4D0</color>
     <color name="secondary_container_dark">#4A4458</color>
     <color name="on_secondary_container_dark">#E8DEF8</color>
+
+
+    <!-- Chart Colors -->
+    <color name="chart_blue">#4361EE</color>
+    <color name="chart_green">#4CAF50</color>
+    <color name="chart_orange">#FF9800</color>
+    <color name="chart_purple">#9C27B0</color>
+    <color name="chart_red">#F44336</color>
+    <color name="chart_cyan">#00BCD4</color>
+    <color name="chart_light_green">#8BC34A</color>
+    <color name="chart_deep_orange">#FF5722</color>
+
+    <!-- Medal Colors -->
+    <color name="gold">#FFD700</color>
+    <color name="silver">#C0C0C0</color>
+    <color name="bronze">#CD7F32</color>
+
 </resources>

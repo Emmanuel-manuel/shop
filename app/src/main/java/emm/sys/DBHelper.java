@@ -7,7 +7,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 //import androidx.annotation.Nullable;
 
@@ -606,6 +608,62 @@ public Cursor getIssuedGoodsByDate(String date) {
     return db.rawQuery("SELECT * FROM issue_goods WHERE date(timestamp) = ? ORDER BY timestamp DESC",
             new String[]{date});
 }
+
+
+
+    // ============ Method to get inventory summary by date ============
+    public Cursor getInventorySummaryByDate(String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT product_name, SUM(quantity) as total_quantity, SUM(balance) as total_balance " +
+                        "FROM inventory WHERE date(timestamp) = ? " +
+                        "GROUP BY product_name " +
+                        "ORDER BY total_quantity DESC",
+                new String[]{date}
+        );
+    }
+
+    // ============ Method to get issued goods summary by date ============
+    public Cursor getIssuedGoodsSummaryByDate(String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT product_name, SUM(quantity) as total_quantity " +
+                        "FROM issue_goods WHERE date(timestamp) = ? " +
+                        "GROUP BY product_name " +
+                        "ORDER BY total_quantity DESC",
+                new String[]{date}
+        );
+    }
+
+    // ============ Method to get daily totals ============
+    public Map<String, Integer> getDailyTotals(String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Map<String, Integer> totals = new HashMap<>();
+
+        // Get total inventory
+        Cursor inventoryCursor = db.rawQuery(
+                "SELECT COALESCE(SUM(quantity), 0) as total_inventory FROM inventory WHERE date(timestamp) = ?",
+                new String[]{date}
+        );
+        if (inventoryCursor.moveToFirst()) {
+            totals.put("inventory", inventoryCursor.getInt(0));
+        }
+        inventoryCursor.close();
+
+        // Get total issued
+        Cursor issuedCursor = db.rawQuery(
+                "SELECT COALESCE(SUM(quantity), 0) as total_issued FROM issue_goods WHERE date(timestamp) = ?",
+                new String[]{date}
+        );
+        if (issuedCursor.moveToFirst()) {
+            totals.put("issued", issuedCursor.getInt(0));
+        }
+        issuedCursor.close();
+
+        return totals;
+    }
+
+
 
 
 
