@@ -42,6 +42,7 @@
     <color name="surface">#FFFFFF</color>  <!-- White surface for cards -->
     <color name="on_surface">#1C1B1F</color>  <!-- Dark gray for text on surface -->
     <color name="on_surface_variant">#757575</color>  <!-- Medium gray for secondary text -->
+    <color name="surface_variant">#E0E0E0</color>
 
     <color name="secondary_container">#E8DEF8</color>  <!-- Light purple container -->
     <color name="on_secondary_container">#21005D</color>  <!-- Dark purple text on container -->
@@ -65,6 +66,8 @@
     <color name="on_surface_variant_dark">#CAC4D0</color>
     <color name="secondary_container_dark">#4A4458</color>
     <color name="on_secondary_container_dark">#E8DEF8</color>
+    <color name="date_highlight">#4CAF50</color>
+    <color name="date_highlight_bg">#E8F5E9</color>
 
 
     <!-- Chart Colors -->

@@ -193,7 +193,7 @@ public class ViewProductsDetailsFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Quick Actions");
 
-        String[] actions = {"Refresh List", "Export Data", "Add New Product", "Delete All Products"};
+        String[] actions = {"Refresh List", "Export Data", "Share", "Add New Product", "Delete All Products"};
 
         builder.setItems(actions, new DialogInterface.OnClickListener() {
             @Override
@@ -206,10 +206,13 @@ public class ViewProductsDetailsFragment extends Fragment {
                     case 1: // Export
                         Toast.makeText(getActivity(), "Export feature coming soon", Toast.LENGTH_SHORT).show();
                         break;
-                    case 2: // Add New
+                    case 2: // Share
+                        Toast.makeText(getActivity(), "Share feature coming soon", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 3: // Add New
                         navigateToAddProduct();
                         break;
-                    case 3: // Delete All
+                    case 4: // Delete All
                         showDeleteAllConfirmation();
                         break;
                 }

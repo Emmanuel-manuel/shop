@@ -1,7 +1,6 @@
 package emm.sys;
 
 import android.app.DatePickerDialog;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,11 +8,13 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
@@ -25,11 +26,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements DatePicker.OnDateChangedListener {
 
     private MaterialButton btnDateFilter;
     private TextView txtTotalInventory, txtTotalIssued, txtRemainingBalance, txtDateRange;
@@ -41,9 +44,84 @@ public class HomeFragment extends Fragment {
     private SimpleDateFormat displayFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
     private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
-    // Add a handler to manage background tasks
     private Handler handler;
     private boolean isFragmentActive = true;
+
+    // Store dates with data for highlighting
+    private Set<String> datesWithData = new HashSet<>();
+    private HighlightedDatePickerDialog datePickerDialog;
+
+    private void showDateSelectionDialog() {
+        if (!isAdded() || getActivity() == null) {
+            return;
+        }
+
+        // Get all dates with data
+        new Thread(() -> {
+            if (!isFragmentActive || dbHelper == null) return;
+
+            try {
+                Set<String> dates = dbHelper.getAllDatesWithData();
+                List<String> dateList = new ArrayList<>(dates);
+
+                // Sort dates in descending order (newest first)
+                Collections.sort(dateList, Collections.reverseOrder());
+
+                // Convert to display format
+                final List<String> displayDates = new ArrayList<>();
+                for (String date : dateList) {
+                    try {
+                        Date parsedDate = dbDateFormat.parse(date);
+                        displayDates.add(displayFormat.format(parsedDate));
+                    } catch (Exception e) {
+                        displayDates.add(date);
+                    }
+                }
+
+                // Add "Today" option
+                final List<String> finalDateList = dateList;
+
+                if (handler != null && isFragmentActive) {
+                    handler.post(() -> {
+                        if (!isAdded() || getActivity() == null) return;
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setTitle("📅 Select Date with Data");
+
+                        // Add "Today" option at the top
+                        final List<String> options = new ArrayList<>();
+                        options.add("📊 Today");
+                        options.addAll(displayDates);
+
+                        builder.setItems(options.toArray(new String[0]), (dialog, which) -> {
+                            if (which == 0) {
+                                // Today selected
+                                loadTodayAnalytics();
+                            } else {
+                                // Other date selected
+                                int dataIndex = which - 1;
+                                if (dataIndex < finalDateList.size()) {
+                                    String selectedDbDate = finalDateList.get(dataIndex);
+                                    String selectedDisplayDate = options.get(which);
+
+                                    selectedDate = selectedDbDate;
+                                    btnDateFilter.setText("📅 " + selectedDisplayDate + " 📊");
+                                    loadAnalyticsByDate(selectedDate);
+                                }
+                            }
+                        });
+
+                        builder.setNegativeButton("Cancel", null);
+
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -53,10 +131,12 @@ public class HomeFragment extends Fragment {
         initializeViews(view);
         handler = new Handler(Looper.getMainLooper());
 
-        // Initialize DBHelper only if needed
         if (dbHelper == null) {
             dbHelper = new DBHelper(getActivity());
         }
+
+        // Load dates with data in background
+        loadDatesWithData();
 
         loadTodayAnalytics();
 
@@ -81,8 +161,24 @@ public class HomeFragment extends Fragment {
         distributionContainer = view.findViewById(R.id.distributionContainer);
     }
 
+    private void loadDatesWithData() {
+        new Thread(() -> {
+            if (!isFragmentActive || dbHelper == null) return;
+
+            try {
+                datesWithData = dbHelper.getAllDatesWithData();
+
+                // Log for debugging
+                if (!datesWithData.isEmpty()) {
+                    System.out.println("Dates with data: " + datesWithData.size());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     private void showDatePickerDialog() {
-        // Check if fragment is attached to activity
         if (!isAdded() || getActivity() == null) {
             return;
         }
@@ -92,8 +188,8 @@ public class HomeFragment extends Fragment {
         int month = calendar.get(Calendar.MONTH);
         int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-                getActivity(),
+        // Create custom date picker dialog
+        datePickerDialog = new HighlightedDatePickerDialog(getActivity(),
                 (view, selectedYear, selectedMonth, selectedDay) -> {
                     Calendar selectedCalendar = Calendar.getInstance();
                     selectedCalendar.set(selectedYear, selectedMonth, selectedDay);
@@ -103,39 +199,124 @@ public class HomeFragment extends Fragment {
 
                     btnDateFilter.setText("📅 " + displayDate);
                     loadAnalyticsByDate(selectedDate);
-                },
-                year, month, day
-        );
 
+                    // Update the button text to show it's selected
+                    updateButtonForSelectedDate(displayDate, selectedDate);
+                },
+                year, month, day);
+
+        // Set max date to today
         datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+
+        // Set date changed listener to update highlights when month changes
+        datePickerDialog.getDatePicker().init(year, month, day, this);
+
+        // Load and set highlighted days for current month
+        updateHighlightedDays(year, month);
+
+        // Customize dialog appearance
+        customizeDatePickerDialog();
+
         datePickerDialog.show();
+    }
+
+    private void updateButtonForSelectedDate(String displayDate, String dbDate) {
+        // Check if the selected date has data
+        boolean hasData = datesWithData.contains(dbDate);
+
+        if (hasData) {
+            btnDateFilter.setText("📅 " + displayDate + " 📊");
+            btnDateFilter.setBackgroundColor(Color.parseColor("#E8F5E9")); // Light green
+        } else {
+            btnDateFilter.setText("📅 " + displayDate);
+            btnDateFilter.setBackgroundColor(Color.TRANSPARENT);
+        }
+    }
+
+    private void customizeDatePickerDialog() {
+        try {
+            // Set dialog title
+            datePickerDialog.setTitle("📅 Select Date with Data");
+
+            // Customize positive button
+            datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setText("Select");
+            datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setText("Cancel");
+
+            // Add info text about highlighted dates
+            TextView infoText = new TextView(getActivity());
+            infoText.setText("• Green dates have data\n• Today's date is auto-selected");
+            infoText.setTextSize(12);
+            infoText.setTextColor(Color.parseColor("#757575"));
+            infoText.setPadding(24, 16, 24, 8);
+
+            // Get the dialog's main layout and add info text
+            ViewGroup dialogLayout = (ViewGroup) datePickerDialog.findViewById(android.R.id.content);
+            if (dialogLayout != null && dialogLayout.getChildAt(0) instanceof ViewGroup) {
+                ViewGroup contentLayout = (ViewGroup) dialogLayout.getChildAt(0);
+                contentLayout.addView(infoText, 0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+        // Update highlighted days when month changes
+        updateHighlightedDays(year, monthOfYear);
+    }
+
+    private void updateHighlightedDays(int year, int month) {
+        new Thread(() -> {
+            if (!isFragmentActive || dbHelper == null || datePickerDialog == null) return;
+
+            try {
+                Set<Integer> highlightedDays = dbHelper.getHighlightedDaysForMonth(year, month);
+
+                // Update UI on main thread
+                if (handler != null && isFragmentActive) {
+                    handler.post(() -> {
+                        if (datePickerDialog != null) {
+                            datePickerDialog.setHighlightedDays(highlightedDays);
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private void loadTodayAnalytics() {
         selectedDate = "";
-        btnDateFilter.setText("📅 Today");
         String todayDate = dbDateFormat.format(new Date());
+        String displayDate = "Today";
+
+        // Check if today has data
+        boolean todayHasData = datesWithData.contains(todayDate);
+        if (todayHasData) {
+            btnDateFilter.setText("📅 " + displayDate + " 📊");
+        } else {
+            btnDateFilter.setText("📅 " + displayDate);
+        }
+
         loadAnalyticsByDate(todayDate);
     }
 
     private void loadAnalyticsByDate(String date) {
-        // Check if fragment is still attached
         if (!isAdded() || getActivity() == null) {
             return;
         }
 
         new Thread(() -> {
             try {
-                // Check if fragment is still active
                 if (!isFragmentActive) {
                     return;
                 }
 
-                // Get data from database
                 Map<String, Integer> inventoryMap = getInventoryByDate(date);
                 Map<String, Integer> issuedMap = getIssuedGoodsByDate(date);
 
-                // Calculate totals
                 int totalInventory = 0;
                 int totalIssued = 0;
 
@@ -148,11 +329,8 @@ public class HomeFragment extends Fragment {
                 }
 
                 int remainingBalance = totalInventory - totalIssued;
-
-                // Get top products (sorted by issued quantity)
                 List<Map.Entry<String, Integer>> topProducts = getTopProducts(issuedMap, 5);
 
-                // Find max inventory for progress bar scaling
                 int maxInventory = 0;
                 for (Map.Entry<String, Integer> entry : inventoryMap.entrySet()) {
                     int quantity = entry.getValue();
@@ -168,37 +346,34 @@ public class HomeFragment extends Fragment {
                 final Map<String, Integer> finalInventoryMap = inventoryMap;
                 final Map<String, Integer> finalIssuedMap = issuedMap;
                 final List<Map.Entry<String, Integer>> finalTopProducts = topProducts;
-                final String displayDate = date.equals(dbDateFormat.format(new Date())) ? "Today" : formatDateForDisplay(date);
+                final String displayDate = date.equals(dbDateFormat.format(new Date())) ?
+                        "Today" : formatDateForDisplay(date);
 
-                // Post UI updates to main thread
                 if (handler != null && isFragmentActive) {
                     handler.post(() -> {
-                        // Check if fragment is still attached
                         if (!isAdded() || getActivity() == null) {
                             return;
                         }
 
-                        // Update summary stats
                         txtTotalInventory.setText(String.valueOf(finalTotalInventory));
                         txtTotalIssued.setText(String.valueOf(finalTotalIssued));
                         txtRemainingBalance.setText(String.valueOf(finalRemainingBalance));
-                        txtDateRange.setText(displayDate + " Analytics");
 
-                        // Update inventory progress bars
+                        // Update date range text with data indicator
+                        String dateText = displayDate + " Analytics";
+                        if (!finalInventoryMap.isEmpty() || !finalIssuedMap.isEmpty()) {
+                            dateText += " 📊";
+                        }
+                        txtDateRange.setText(dateText);
+
                         updateInventoryProgress(finalInventoryMap, finalIssuedMap, finalMaxInventory);
-
-                        // Update top products
                         updateTopProducts(finalTopProducts);
-
-                        // Update distribution view
                         updateDistributionView(finalInventoryMap, finalIssuedMap);
 
-                        // Update notes
                         txtInventoryNote.setText(finalInventoryMap.size() + " products in inventory");
                         txtTopProductsNote.setText("Top " + Math.min(5, finalTopProducts.size()) + " issued products");
                         txtDistributionNote.setText("Comparing " + finalInventoryMap.size() + " products");
 
-                        // Show message if no data
                         if (finalInventoryMap.isEmpty() && finalIssuedMap.isEmpty()) {
                             Toast.makeText(getActivity(),
                                     "No data for selected date", Toast.LENGTH_SHORT).show();
@@ -208,7 +383,6 @@ public class HomeFragment extends Fragment {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                // Log error but don't crash
                 if (handler != null && isFragmentActive && isAdded() && getActivity() != null) {
                     handler.post(() -> {
                         Toast.makeText(getActivity(),
@@ -223,8 +397,7 @@ public class HomeFragment extends Fragment {
         Map<String, Integer> inventoryMap = new HashMap<>();
 
         try {
-            // Use DBHelper method instead of direct SQLiteDatabase access
-            Cursor cursor = dbHelper.getReadableDatabase().rawQuery(
+            android.database.Cursor cursor = dbHelper.getReadableDatabase().rawQuery(
                     "SELECT product_name, SUM(quantity) as total_quantity " +
                             "FROM inventory WHERE date(timestamp) = ? " +
                             "GROUP BY product_name",
@@ -250,7 +423,7 @@ public class HomeFragment extends Fragment {
         Map<String, Integer> issuedMap = new HashMap<>();
 
         try {
-            Cursor cursor = dbHelper.getReadableDatabase().rawQuery(
+            android.database.Cursor cursor = dbHelper.getReadableDatabase().rawQuery(
                     "SELECT product_name, SUM(quantity) as total_quantity " +
                             "FROM issue_goods WHERE date(timestamp) = ? " +
                             "GROUP BY product_name",
@@ -275,7 +448,6 @@ public class HomeFragment extends Fragment {
     private List<Map.Entry<String, Integer>> getTopProducts(Map<String, Integer> issuedMap, int limit) {
         List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(issuedMap.entrySet());
 
-        // Use Collections.sort() instead of List.sort() for API level 23 compatibility
         Collections.sort(sortedEntries, new Comparator<Map.Entry<String, Integer>>() {
             @Override
             public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
@@ -289,16 +461,14 @@ public class HomeFragment extends Fragment {
     private void updateInventoryProgress(Map<String, Integer> inventoryMap,
                                          Map<String, Integer> issuedMap,
                                          int maxInventory) {
-        // Clear existing views
         inventoryProgressContainer.removeAllViews();
 
-        // Check if fragment is still attached
         if (!isAdded() || getActivity() == null) {
             return;
         }
 
         if (inventoryMap.isEmpty()) {
-            TextView noDataText = new TextView(getActivity()); // Use getActivity() context
+            TextView noDataText = new TextView(getActivity());
             noDataText.setText("No inventory data available");
             noDataText.setTextSize(14);
             noDataText.setTextColor(getResources().getColor(android.R.color.darker_gray));
@@ -308,12 +478,10 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        android.view.LayoutInflater inflater = android.view.LayoutInflater.from(getActivity());
 
-        // Sort products by inventory quantity (descending)
         List<Map.Entry<String, Integer>> sortedProducts = new ArrayList<>(inventoryMap.entrySet());
 
-        // Use Collections.sort() instead of List.sort() for API level 23 compatibility
         Collections.sort(sortedProducts, new Comparator<Map.Entry<String, Integer>>() {
             @Override
             public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
@@ -333,7 +501,6 @@ public class HomeFragment extends Fragment {
             ProgressBar progressBar = progressItem.findViewById(R.id.progressBar);
             TextView txtIssued = progressItem.findViewById(R.id.txtIssued);
 
-            // Set product name (truncate if too long)
             String displayName = productName.length() > 20 ?
                     productName.substring(0, 20) + "..." : productName;
             txtProductName.setText(displayName);
@@ -341,12 +508,10 @@ public class HomeFragment extends Fragment {
             txtProductValue.setText(String.valueOf(inventoryQty));
             txtIssued.setText("Issued: " + issuedQty);
 
-            // Set progress (scale to max inventory)
             if (maxInventory > 0) {
                 int progress = (inventoryQty * 100) / maxInventory;
                 progressBar.setProgress(progress);
 
-                // Set color based on inventory level
                 if (inventoryQty <= 10) {
                     progressBar.getProgressDrawable().setColorFilter(
                             Color.parseColor("#F44336"), android.graphics.PorterDuff.Mode.SRC_IN);
@@ -369,16 +534,14 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateTopProducts(List<Map.Entry<String, Integer>> topProducts) {
-        // Clear existing views
         topProductsContainer.removeAllViews();
 
-        // Check if fragment is still attached
         if (!isAdded() || getActivity() == null) {
             return;
         }
 
         if (topProducts.isEmpty()) {
-            TextView noDataText = new TextView(getActivity()); // Use getActivity() context
+            TextView noDataText = new TextView(getActivity());
             noDataText.setText("No issued goods data");
             noDataText.setTextSize(14);
             noDataText.setTextColor(getResources().getColor(android.R.color.darker_gray));
@@ -388,7 +551,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        android.view.LayoutInflater inflater = android.view.LayoutInflater.from(getActivity());
 
         for (int i = 0; i < topProducts.size(); i++) {
             Map.Entry<String, Integer> entry = topProducts.get(i);
@@ -402,13 +565,12 @@ public class HomeFragment extends Fragment {
 
             txtRank.setText(String.valueOf(i + 1));
 
-            // Set different colors for top 3
             if (i == 0) {
-                txtRank.setBackgroundColor(Color.parseColor("#FFD700")); // Gold
+                txtRank.setBackgroundColor(Color.parseColor("#FFD700"));
             } else if (i == 1) {
-                txtRank.setBackgroundColor(Color.parseColor("#C0C0C0")); // Silver
+                txtRank.setBackgroundColor(Color.parseColor("#C0C0C0"));
             } else if (i == 2) {
-                txtRank.setBackgroundColor(Color.parseColor("#CD7F32")); // Bronze
+                txtRank.setBackgroundColor(Color.parseColor("#CD7F32"));
             }
 
             String displayName = entry.getKey().length() > 20 ?
@@ -423,16 +585,14 @@ public class HomeFragment extends Fragment {
 
     private void updateDistributionView(Map<String, Integer> inventoryMap,
                                         Map<String, Integer> issuedMap) {
-        // Clear existing views
         distributionContainer.removeAllViews();
 
-        // Check if fragment is still attached
         if (!isAdded() || getActivity() == null) {
             return;
         }
 
         if (inventoryMap.isEmpty() && issuedMap.isEmpty()) {
-            TextView noDataText = new TextView(getActivity()); // Use getActivity() context
+            TextView noDataText = new TextView(getActivity());
             noDataText.setText("No distribution data available");
             noDataText.setTextSize(14);
             noDataText.setTextColor(getResources().getColor(android.R.color.darker_gray));
@@ -442,14 +602,12 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        LayoutInflater inflater = LayoutInflater.from(getActivity());
+        android.view.LayoutInflater inflater = android.view.LayoutInflater.from(getActivity());
 
-        // Get all unique products
         List<String> allProducts = new ArrayList<>();
         allProducts.addAll(inventoryMap.keySet());
         allProducts.addAll(issuedMap.keySet());
 
-        // Remove duplicates
         List<String> uniqueProducts = new ArrayList<>();
         for (String product : allProducts) {
             if (!uniqueProducts.contains(product)) {
@@ -457,7 +615,6 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // Sort by inventory quantity (descending)
         Collections.sort(uniqueProducts, new Comparator<String>() {
             @Override
             public int compare(String a, String b) {
@@ -508,7 +665,6 @@ public class HomeFragment extends Fragment {
         super.onResume();
         isFragmentActive = true;
 
-        // Refresh data when fragment resumes
         if (selectedDate.isEmpty()) {
             loadTodayAnalytics();
         } else {
@@ -521,9 +677,13 @@ public class HomeFragment extends Fragment {
         super.onPause();
         isFragmentActive = false;
 
-        // Remove any pending callbacks
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
+        }
+
+        // Dismiss date picker if shown
+        if (datePickerDialog != null && datePickerDialog.isShowing()) {
+            datePickerDialog.dismiss();
         }
     }
 
@@ -532,13 +692,11 @@ public class HomeFragment extends Fragment {
         super.onDestroy();
         isFragmentActive = false;
 
-        // Clean up database connection
         if (dbHelper != null) {
             dbHelper.close();
             dbHelper = null;
         }
 
-        // Remove any pending callbacks
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
             handler = null;
