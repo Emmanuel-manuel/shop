@@ -6,10 +6,13 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,7 +24,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
 
-        super(context, "Shop.db", null, 6);
+        super(context, "Shop.db", null, 7);
     }
 
     @Override
@@ -37,7 +40,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 "product_name TEXT," +
                 "weight TEXT," +
                 "flavour TEXT," +
-                "price INTEGER," +
+                "buying_price INTEGER," +
+                "selling_price INTEGER," +
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
         // Create inventory table
@@ -85,6 +89,25 @@ public class DBHelper extends SQLiteOpenHelper {
                     "flavour TEXT," +
                     "price INTEGER," +
                     "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        }
+        if (oldVersion < 7) {
+            // Rename old price column to buying_price and add selling_price column
+            db.execSQL("ALTER TABLE product_details RENAME TO product_details_old");
+
+            db.execSQL("CREATE TABLE product_details(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "product_name TEXT," +
+                    "weight TEXT," +
+                    "flavour TEXT," +
+                    "buying_price INTEGER," +
+                    "selling_price INTEGER," +
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+
+            // Copy data from old table, set selling_price = buying_price for existing records
+            db.execSQL("INSERT INTO product_details (id, product_name, weight, flavour, buying_price, selling_price, timestamp) " +
+                    "SELECT id, product_name, weight, flavour, price, price, timestamp FROM product_details_old");
+
+            db.execSQL("DROP TABLE product_details_old");
         }
     }
 
@@ -138,16 +161,32 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // ++++++++++++++++++++ GENESIS OF PRODUCT RELATED METHODS +++++++++++++++++++++++++++++++++++++++++++++++++++++
     // ============ Method to insert product details ============
-    public boolean insertProductDetails(String productName, String weight, String flavour, int price) {
+    public boolean insertProductDetails(String productName, String weight, String flavour,
+                                        int buyingPrice, int sellingPrice) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("product_name", productName);
         values.put("weight", weight);
         values.put("flavour", flavour);
-        values.put("price", price);
+        values.put("buying_price", buyingPrice);
+        values.put("selling_price", sellingPrice);
 
         long result = db.insert("product_details", null, values);
         return result != -1;
+    }
+
+    // ============ updateProductPrices method ============
+    public boolean updateProductPrices(String productName, String weight, String flavour,
+                                       int newBuyingPrice, int newSellingPrice) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("buying_price", newBuyingPrice);
+        values.put("selling_price", newSellingPrice);
+
+        int rowsAffected = db.update("product_details", values,
+                "product_name = ? AND weight = ? AND flavour = ?",
+                new String[]{productName, weight, flavour});
+        return rowsAffected > 0;
     }
 
     // ============ NEW METHOD: Check if product details already exist ============
@@ -214,13 +253,14 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // ============ Method to update all product fields ============
     public boolean updateProductDetails(int id, String productName, String weight,
-                                        String flavour, int price) {
+                                        String flavour, int buyingPrice, int sellingPrice) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("product_name", productName);
         values.put("weight", weight);
         values.put("flavour", flavour);
-        values.put("price", price);
+        values.put("buying_price", buyingPrice);
+        values.put("selling_price", sellingPrice);
 
         int rowsAffected = db.update("product_details", values, "id = ?",
                 new String[]{String.valueOf(id)});
@@ -419,27 +459,53 @@ public class DBHelper extends SQLiteOpenHelper {
 
         return weights;
     }
-    // ============ Method to get all products with available balance from inventory ============
+    // ============ Method to get all products with available balance from inventory for TODAY============
     public List<String> getProductsWithAvailableBalance() {
         SQLiteDatabase db = this.getReadableDatabase();
         List<String> products = new ArrayList<>();
 
-        // Get distinct product names where balance > 0 (ordered by product_name)
+        // Get today's date in device's local timezone (YYYY-MM-DD format)
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        // Get distinct product names where balance > 0 for TODAY
         Cursor cursor = db.rawQuery(
-                "SELECT DISTINCT product_name FROM inventory WHERE balance > 0 ORDER BY product_name",
-                null
+                "SELECT DISTINCT product_name FROM inventory WHERE date(timestamp) = ? AND balance > 0 ORDER BY product_name",
+                new String[]{todayDate}
         );
 
-        while (cursor.moveToNext()) {
-            products.add(cursor.getString(0));
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String productName = cursor.getString(0);
+                if (productName != null && !productName.trim().isEmpty()) {
+                    products.add(productName);
+                }
+            }
+            cursor.close();
         }
-        cursor.close();
 
         return products;
     }
 
     // ============ Method to get weight and flavour for a product from TODAY'S inventory table (device local date) ============
     public Cursor getInventoryProductDetails(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Get today's date in device's local timezone (YYYY-MM-DD format)
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        // Get the latest weight, flavour, and balance for TODAY
+        return db.rawQuery(
+                "SELECT weight, flavour, balance FROM inventory " +
+                        "WHERE product_name = ? AND date(timestamp) = ? AND balance > 0 " +
+                        "ORDER BY timestamp DESC LIMIT 1",
+                new String[]{productName, todayDate}
+        );
+    }
+
+    // ============ Method to get product details from ANY inventory (not limited to today) ============
+    public Cursor getAnyInventoryProductDetails(String productName) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery(
                 "SELECT weight, flavour, balance FROM inventory WHERE product_name = ? AND balance > 0 ORDER BY timestamp DESC LIMIT 1",

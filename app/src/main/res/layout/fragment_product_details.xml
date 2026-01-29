@@ -153,16 +153,17 @@
                     </LinearLayout>
 
                     <!-- Price -->
+                    <!-- Buying Price -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:layout_marginBottom="24dp">
+                        android:layout_marginBottom="16dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Price"
+                            android:text="Buying Price"
                             android:textSize="14sp"
                             android:textColor="@color/on_surface"
                             android:textStyle="bold"
@@ -178,11 +179,56 @@
                             android:paddingEnd="16dp">
 
                             <EditText
-                                android:id="@+id/txtPrice"
+                                android:id="@+id/txtBuyingPrice"
                                 android:layout_width="0dp"
                                 android:layout_height="match_parent"
                                 android:layout_weight="1"
-                                android:hint="Enter price"
+                                android:hint="Enter buying price"
+                                android:inputType="numberDecimal"
+                                android:background="@null"
+                                android:maxLines="1"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="KES"
+                                android:textSize="14sp"
+                                android:textColor="@color/primary"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Selling Price -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="24dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Selling Price"
+                            android:textSize="14sp"
+                            android:textColor="@color/on_surface"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="4dp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:orientation="horizontal"
+                            android:background="@drawable/edittext_bg"
+                            android:gravity="center_vertical"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="16dp">
+
+                            <EditText
+                                android:id="@+id/txtSellingPrice"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:hint="Enter selling price"
                                 android:inputType="numberDecimal"
                                 android:background="@null"
                                 android:maxLines="1"/>

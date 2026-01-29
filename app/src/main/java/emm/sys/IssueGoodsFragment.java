@@ -1,9 +1,11 @@
 package emm.sys;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -111,8 +113,20 @@ public class IssueGoodsFragment extends Fragment {
         availableProducts = dbHelper.getProductsWithAvailableBalance();
 
         if (availableProducts.isEmpty()) {
-            // No products available in inventory
-            availableProducts.add("No products in inventory");
+            // Check if there are any products in inventory at all (not just today)
+            List<String> allProducts = dbHelper.getAllProductNames();
+            if (allProducts.isEmpty()) {
+                availableProducts.add("No products in inventory");
+//                Toast.makeText(getActivity(),
+//                        "No products in inventory. Please add inventory first.",
+//                        Toast.LENGTH_LONG).show();
+            } else {
+                availableProducts.add("Select Product");
+                // Show warning that no products were received today
+//                Toast.makeText(getActivity(),
+//                        "No products received today. Please receive inventory first.",
+//                        Toast.LENGTH_LONG).show();
+            }
         } else {
             // Add "Select Product" as first item
             availableProducts.add(0, "Select Product");
@@ -126,6 +140,33 @@ public class IssueGoodsFragment extends Fragment {
         );
         productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerProduct.setAdapter(productAdapter);
+
+        // Show a subtle hint instead of Toast
+        showProductAvailabilityHint();
+    }
+
+    private void showProductAvailabilityHint() {
+        // Only show hint on the FIRST load, not every time
+        if (availableProducts.size() == 1 && availableProducts.get(0).equals("Select Product")) {
+            // This means no products were received today, but there are products in database
+            TextView hintText = new TextView(getActivity());
+            hintText.setText("ℹ️ No products received today. Add inventory first.");
+            hintText.setTextSize(12);
+            hintText.setTextColor(Color.GRAY);
+            hintText.setGravity(Gravity.CENTER);
+            hintText.setPadding(0, 8, 0, 8);
+
+            // Add hint below the spinner or in a designated area
+            // You'll need to adjust based on your layout
+        } else if (availableProducts.size() == 1 && availableProducts.get(0).equals("No products in inventory")) {
+            // This means no products at all in database
+            TextView hintText = new TextView(getActivity());
+            hintText.setText("ℹ️ No products in inventory. Add products first.");
+            hintText.setTextSize(12);
+            hintText.setTextColor(Color.GRAY);
+            hintText.setGravity(Gravity.CENTER);
+            hintText.setPadding(0, 8, 0, 8);
+        }
     }
 
     private void checkEditMode() {

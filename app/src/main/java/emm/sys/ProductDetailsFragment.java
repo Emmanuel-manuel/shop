@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -26,7 +25,7 @@ import java.util.Set;
 
 public class ProductDetailsFragment extends Fragment {
 
-    private EditText txtProductName, txtPrice;
+    private EditText txtProductName, txtBuyingPrice, txtSellingPrice;
     private Spinner spinnerWeight, spinnerFlavour;
     private Button saveButton, updatePriceButton, viewProductsButton, searchButton;
     private DBHelper dbHelper;
@@ -46,17 +45,11 @@ public class ProductDetailsFragment extends Fragment {
 
         // Initialize views
         txtProductName = view.findViewById(R.id.txtProductName);
-        txtPrice = view.findViewById(R.id.txtPrice);
+        txtBuyingPrice = view.findViewById(R.id.txtBuyingPrice);
+        txtSellingPrice = view.findViewById(R.id.txtSellingPrice);
         spinnerWeight = view.findViewById(R.id.spinnerWeight);
         spinnerFlavour = view.findViewById(R.id.spinnerFlavour);
         saveButton = view.findViewById(R.id.saveButton);
-
-        // Get the parent layout to add new buttons
-        LinearLayout parentLayout = view.findViewById(android.R.id.content);
-        if (parentLayout == null) {
-            // Try to find the card view or main layout
-            parentLayout = (LinearLayout) view.findViewById(R.id.fragmentContainer);
-        }
 
         // Setup spinners
         setupSpinners();
@@ -111,8 +104,8 @@ public class ProductDetailsFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedWeight = parent.getItemAtPosition(position).toString();
-                // Auto-fill price if product exists
-                autoFillPriceIfExists();
+                // Auto-fill prices if product exists
+                autoFillPricesIfExists();
             }
 
             @Override
@@ -125,8 +118,8 @@ public class ProductDetailsFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedFlavour = parent.getItemAtPosition(position).toString();
-                // Auto-fill price if product exists
-                autoFillPriceIfExists();
+                // Auto-fill prices if product exists
+                autoFillPricesIfExists();
             }
 
             @Override
@@ -219,7 +212,8 @@ public class ProductDetailsFragment extends Fragment {
         if (cursor != null && cursor.moveToFirst()) {
             String weight = cursor.getString(cursor.getColumnIndexOrThrow("weight"));
             String flavour = cursor.getString(cursor.getColumnIndexOrThrow("flavour"));
-            int price = cursor.getInt(cursor.getColumnIndexOrThrow("price"));
+            int buyingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("buying_price"));
+            int sellingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("selling_price"));
 
             // Set weight spinner
             ArrayAdapter adapter = (ArrayAdapter) spinnerWeight.getAdapter();
@@ -235,14 +229,15 @@ public class ProductDetailsFragment extends Fragment {
                 spinnerFlavour.setSelection(flavourPosition);
             }
 
-            // Set price
-            txtPrice.setText(String.valueOf(price));
+            // Set prices
+            txtBuyingPrice.setText(String.valueOf(buyingPrice));
+            txtSellingPrice.setText(String.valueOf(sellingPrice));
 
             cursor.close();
         }
     }
 
-    private void autoFillPriceIfExists() {
+    private void autoFillPricesIfExists() {
         String productName = txtProductName.getText().toString().trim();
         if (!productName.isEmpty() && !selectedWeight.isEmpty() && !selectedFlavour.isEmpty()) {
             Cursor cursor = dbHelper.getProductByName(productName);
@@ -252,8 +247,10 @@ public class ProductDetailsFragment extends Fragment {
                     String flavour = cursor.getString(cursor.getColumnIndexOrThrow("flavour"));
 
                     if (weight.equals(selectedWeight) && flavour.equals(selectedFlavour)) {
-                        int price = cursor.getInt(cursor.getColumnIndexOrThrow("price"));
-                        txtPrice.setText(String.valueOf(price));
+                        int buyingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("buying_price"));
+                        int sellingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("selling_price"));
+                        txtBuyingPrice.setText(String.valueOf(buyingPrice));
+                        txtSellingPrice.setText(String.valueOf(sellingPrice));
                         break;
                     }
                 }
@@ -265,7 +262,8 @@ public class ProductDetailsFragment extends Fragment {
     private void saveProductDetails() {
         // Get input values
         String productName = txtProductName.getText().toString().trim();
-        String priceStr = txtPrice.getText().toString().trim();
+        String buyingPriceStr = txtBuyingPrice.getText().toString().trim();
+        String sellingPriceStr = txtSellingPrice.getText().toString().trim();
 
         // Validate inputs
         if (productName.isEmpty()) {
@@ -284,20 +282,39 @@ public class ProductDetailsFragment extends Fragment {
             return;
         }
 
-        if (priceStr.isEmpty()) {
-            txtPrice.setError("Please enter price");
-            txtPrice.requestFocus();
+        if (buyingPriceStr.isEmpty()) {
+            txtBuyingPrice.setError("Please enter buying price");
+            txtBuyingPrice.requestFocus();
+            return;
+        }
+
+        if (sellingPriceStr.isEmpty()) {
+            txtSellingPrice.setError("Please enter selling price");
+            txtSellingPrice.requestFocus();
             return;
         }
 
         try {
-            // Convert price to integer
-            int price = Integer.parseInt(priceStr);
+            // Convert prices to integers
+            int buyingPrice = Integer.parseInt(buyingPriceStr);
+            int sellingPrice = Integer.parseInt(sellingPriceStr);
 
-            // Check if price is valid
-            if (price <= 0) {
-                txtPrice.setError("Price must be greater than 0");
-                txtPrice.requestFocus();
+            // Check if prices are valid
+            if (buyingPrice <= 0) {
+                txtBuyingPrice.setError("Buying price must be greater than 0");
+                txtBuyingPrice.requestFocus();
+                return;
+            }
+
+            if (sellingPrice <= 0) {
+                txtSellingPrice.setError("Selling price must be greater than 0");
+                txtSellingPrice.requestFocus();
+                return;
+            }
+
+            if (sellingPrice <= buyingPrice) {
+                txtSellingPrice.setError("Selling price must be greater than buying price");
+                txtSellingPrice.requestFocus();
                 return;
             }
 
@@ -305,11 +322,11 @@ public class ProductDetailsFragment extends Fragment {
             boolean productExists = dbHelper.checkProductDetailsExists(productName, selectedWeight, selectedFlavour);
 
             if (productExists) {
-                // Ask user if they want to update price
-                showUpdatePriceConfirmation(productName, selectedWeight, selectedFlavour, price);
+                // Ask user if they want to update prices
+                showUpdatePriceConfirmation(productName, selectedWeight, selectedFlavour, buyingPrice, sellingPrice);
             } else {
                 // Save to product_details table
-                boolean success = dbHelper.insertProductDetails(productName, selectedWeight, selectedFlavour, price);
+                boolean success = dbHelper.insertProductDetails(productName, selectedWeight, selectedFlavour, buyingPrice, sellingPrice);
 
                 if (success) {
                     Toast.makeText(getActivity(),
@@ -317,7 +334,8 @@ public class ProductDetailsFragment extends Fragment {
                                     "Product: " + productName + "\n" +
                                     "Weight: " + selectedWeight + "\n" +
                                     "Flavour: " + selectedFlavour + "\n" +
-                                    "Price: KES " + price,
+                                    "Buying Price: KES " + buyingPrice + "\n" +
+                                    "Selling Price: KES " + sellingPrice,
                             Toast.LENGTH_LONG).show();
 
                     // Add to existing products list if not already there
@@ -337,20 +355,21 @@ public class ProductDetailsFragment extends Fragment {
             }
 
         } catch (NumberFormatException e) {
-            txtPrice.setError("Please enter a valid number for price");
-            txtPrice.requestFocus();
+            Toast.makeText(getActivity(), "Please enter valid numbers for prices", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void showUpdatePriceConfirmation(String productName, String weight, String flavour, int newPrice) {
+    private void showUpdatePriceConfirmation(String productName, String weight, String flavour, int newBuyingPrice, int newSellingPrice) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Product Already Exists");
         builder.setMessage("Product '" + productName + "' with weight '" + weight +
                 "' and flavour '" + flavour + "' already exists.\n\n" +
-                "Do you want to update the price to KES " + newPrice + "?");
+                "Do you want to update the prices?\n" +
+                "Buying Price: KES " + newBuyingPrice + "\n" +
+                "Selling Price: KES " + newSellingPrice);
 
-        builder.setPositiveButton("Update Price", (dialog, which) -> {
-            updateExistingProductPrice(productName, weight, flavour, newPrice);
+        builder.setPositiveButton("Update Prices", (dialog, which) -> {
+            updateExistingProductPrices(productName, weight, flavour, newBuyingPrice, newSellingPrice);
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> {
@@ -360,25 +379,26 @@ public class ProductDetailsFragment extends Fragment {
         builder.show();
     }
 
-    private void updateExistingProductPrice(String productName, String weight, String flavour, int newPrice) {
-        boolean success = dbHelper.updateProductPrice(productName, weight, flavour, newPrice);
+    private void updateExistingProductPrices(String productName, String weight, String flavour, int newBuyingPrice, int newSellingPrice) {
+        boolean success = dbHelper.updateProductPrices(productName, weight, flavour, newBuyingPrice, newSellingPrice);
 
         if (success) {
             Toast.makeText(getActivity(),
-                    "Price updated successfully!\n" +
+                    "Prices updated successfully!\n" +
                             "Product: " + productName + "\n" +
-                            "New Price: KES " + newPrice,
+                            "New Buying Price: KES " + newBuyingPrice + "\n" +
+                            "New Selling Price: KES " + newSellingPrice,
                     Toast.LENGTH_LONG).show();
             clearForm();
         } else {
-            Toast.makeText(getActivity(), "Failed to update price", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Failed to update prices", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void addUpdatePriceButton(View view) {
         // Create Update Price button
         updatePriceButton = new Button(getActivity());
-        updatePriceButton.setText("Update Price");
+        updatePriceButton.setText("Update Prices");
         updatePriceButton.setBackgroundResource(R.drawable.button_bg);
         updatePriceButton.setTextColor(getResources().getColor(android.R.color.white));
 
@@ -394,7 +414,7 @@ public class ProductDetailsFragment extends Fragment {
         updatePriceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                updatePriceForExistingProduct();
+                updatePricesForExistingProduct();
             }
         });
 
@@ -411,9 +431,10 @@ public class ProductDetailsFragment extends Fragment {
         }
     }
 
-    private void updatePriceForExistingProduct() {
+    private void updatePricesForExistingProduct() {
         String productName = txtProductName.getText().toString().trim();
-        String priceStr = txtPrice.getText().toString().trim();
+        String buyingPriceStr = txtBuyingPrice.getText().toString().trim();
+        String sellingPriceStr = txtSellingPrice.getText().toString().trim();
 
         if (productName.isEmpty()) {
             txtProductName.setError("Please enter product name");
@@ -431,25 +452,44 @@ public class ProductDetailsFragment extends Fragment {
             return;
         }
 
-        if (priceStr.isEmpty()) {
-            txtPrice.setError("Please enter new price");
-            txtPrice.requestFocus();
+        if (buyingPriceStr.isEmpty()) {
+            txtBuyingPrice.setError("Please enter new buying price");
+            txtBuyingPrice.requestFocus();
+            return;
+        }
+
+        if (sellingPriceStr.isEmpty()) {
+            txtSellingPrice.setError("Please enter new selling price");
+            txtSellingPrice.requestFocus();
             return;
         }
 
         try {
-            int newPrice = Integer.parseInt(priceStr);
-            if (newPrice <= 0) {
-                txtPrice.setError("Price must be greater than 0");
-                txtPrice.requestFocus();
+            int newBuyingPrice = Integer.parseInt(buyingPriceStr);
+            int newSellingPrice = Integer.parseInt(sellingPriceStr);
+
+            if (newBuyingPrice <= 0) {
+                txtBuyingPrice.setError("Buying price must be greater than 0");
+                txtBuyingPrice.requestFocus();
                 return;
             }
 
-            updateExistingProductPrice(productName, selectedWeight, selectedFlavour, newPrice);
+            if (newSellingPrice <= 0) {
+                txtSellingPrice.setError("Selling price must be greater than 0");
+                txtSellingPrice.requestFocus();
+                return;
+            }
+
+            if (newSellingPrice <= newBuyingPrice) {
+                txtSellingPrice.setError("Selling price must be greater than buying price");
+                txtSellingPrice.requestFocus();
+                return;
+            }
+
+            updateExistingProductPrices(productName, selectedWeight, selectedFlavour, newBuyingPrice, newSellingPrice);
 
         } catch (NumberFormatException e) {
-            txtPrice.setError("Please enter a valid number");
-            txtPrice.requestFocus();
+            Toast.makeText(getActivity(), "Please enter valid numbers", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -503,12 +543,14 @@ public class ProductDetailsFragment extends Fragment {
             String productName = cursor.getString(cursor.getColumnIndexOrThrow("product_name"));
             String weight = cursor.getString(cursor.getColumnIndexOrThrow("weight"));
             String flavour = cursor.getString(cursor.getColumnIndexOrThrow("flavour"));
-            int price = cursor.getInt(cursor.getColumnIndexOrThrow("price"));
+            int buyingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("buying_price"));
+            int sellingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("selling_price"));
 
             productsList.append("Product: ").append(productName).append("\n")
                     .append("Weight: ").append(weight).append("\n")
                     .append("Flavour: ").append(flavour).append("\n")
-                    .append("Price: KES ").append(price).append("\n")
+                    .append("Buying Price: KES ").append(buyingPrice).append("\n")
+                    .append("Selling Price: KES ").append(sellingPrice).append("\n")
                     .append("----------------\n");
         }
         cursor.close();
@@ -595,12 +637,14 @@ public class ProductDetailsFragment extends Fragment {
             if (productName.toLowerCase().contains(searchTerm.toLowerCase())) {
                 String weight = cursor.getString(cursor.getColumnIndexOrThrow("weight"));
                 String flavour = cursor.getString(cursor.getColumnIndexOrThrow("flavour"));
-                int price = cursor.getInt(cursor.getColumnIndexOrThrow("price"));
+                int buyingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("buying_price"));
+                int sellingPrice = cursor.getInt(cursor.getColumnIndexOrThrow("selling_price"));
 
                 searchResults.append("Product: ").append(productName).append("\n")
                         .append("Weight: ").append(weight).append("\n")
                         .append("Flavour: ").append(flavour).append("\n")
-                        .append("Price: KES ").append(price).append("\n")
+                        .append("Buying Price: KES ").append(buyingPrice).append("\n")
+                        .append("Selling Price: KES ").append(sellingPrice).append("\n")
                         .append("----------------\n");
                 resultCount++;
             }
@@ -620,7 +664,8 @@ public class ProductDetailsFragment extends Fragment {
 
     private void clearForm() {
         txtProductName.setText("");
-        txtPrice.setText("");
+        txtBuyingPrice.setText("");
+        txtSellingPrice.setText("");
         spinnerWeight.setSelection(0);
         spinnerFlavour.setSelection(0);
         txtProductName.requestFocus();
