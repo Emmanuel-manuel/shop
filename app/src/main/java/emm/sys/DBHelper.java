@@ -24,7 +24,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
 
-        super(context, "Shop.db", null, 7);
+        super(context, "Shop.db", null, 8);
     }
 
     @Override
@@ -42,6 +42,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "flavour TEXT," +
                 "buying_price INTEGER," +
                 "selling_price INTEGER," +
+                "profit INTEGER," + // Adds profit column
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
         // Create inventory table
@@ -109,6 +110,15 @@ public class DBHelper extends SQLiteOpenHelper {
 
             db.execSQL("DROP TABLE product_details_old");
         }
+
+        if (oldVersion < 8) { // Increment version to 8
+            // Add profit column to product_details table
+            db.execSQL("ALTER TABLE product_details ADD COLUMN profit INTEGER DEFAULT 0");
+
+            // Update existing records to calculate profit
+            db.execSQL("UPDATE product_details SET profit = selling_price - buying_price WHERE profit = 0");
+        }
+
     }
 
     // .............. GENESIS OF METHODS THAT PUSH DATA IN THE TABLES .....................
@@ -170,6 +180,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("flavour", flavour);
         values.put("buying_price", buyingPrice);
         values.put("selling_price", sellingPrice);
+        values.put("profit", sellingPrice - buyingPrice); // Calculates and store profit
 
         long result = db.insert("product_details", null, values);
         return result != -1;
@@ -182,6 +193,7 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put("buying_price", newBuyingPrice);
         values.put("selling_price", newSellingPrice);
+        values.put("profit", newSellingPrice - newBuyingPrice); // Update profit
 
         int rowsAffected = db.update("product_details", values,
                 "product_name = ? AND weight = ? AND flavour = ?",
