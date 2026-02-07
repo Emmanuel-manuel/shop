@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="3dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Main product info row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Product basic info -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/productNameText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Product Name"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="2dp">
+
+                    <TextView
+                        android:id="@+id/productWeightText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Weight"
+                        android:textSize="12sp"
+                        android:textColor="@color/gray" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="  •  "
+                        android:textSize="12sp"
+                        android:textColor="@color/gray" />
+
+                    <TextView
+                        android:id="@+id/productFlavourText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Flavour"
+                        android:textSize="12sp"
+                        android:textColor="@color/gray" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Selling price (main price) -->
+            <TextView
+                android:id="@+id/sellingPriceText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="KES 0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:layout_marginEnd="8dp" />
+
+            <!-- Expand button -->
+            <ImageView
+                android:id="@+id/expandButton"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_expand_more"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp"
+                app:tint="@color/gray" />
+
+        </LinearLayout>
+
+        <!-- Expandable details section -->
+        <LinearLayout
+            android:id="@+id/extraDetailsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="12dp"
+            android:padding="8dp"
+            android:background="@drawable/edittext_bg_disabled">
+
+            <!-- Pricing details -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pricing Details"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/secondary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:id="@+id/buyingPriceText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Buy: KES 0"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface" />
+                
+                <TextView
+                    android:id="@+id/profitText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Profit: KES 0"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:gravity="end" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/profitMarginText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0% margin"
+                android:textSize="12sp"
+                android:textColor="@color/accent"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Product metadata -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/productIdText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="#001"
+                    android:textSize="11sp"
+                    android:textColor="@color/gray"
+                    android:background="@drawable/product_item_bg"
+                    android:padding="4dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <TextView
+                        android:id="@+id/timestampText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Jan 01, 2024 10:00"
+                        android:textSize="11sp"
+                        android:textColor="@color/gray" />
+
+                    <TextView
+                        android:id="@+id/timeAgoText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2 hours ago"
+                        android:textSize="10sp"
+                        android:textColor="@color/light_gray" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Action buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+                <ImageView
+                    android:id="@+id/editButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_edit"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    android:layout_marginEnd="8dp"
+                    app:tint="@color/secondary" />
+
+                <ImageView
+                    android:id="@+id/deleteButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_delete"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="6dp"
+                    app:tint="@color/error" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

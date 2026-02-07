@@ -229,10 +229,22 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     // ============ NEW METHOD: Update product price ============
-    public boolean updateProductPrice(String productName, String weight, String flavour, int newPrice) {
+    public boolean updateProductPrice(String productName, String weight, String flavour, int newSellingPrice) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("price", newPrice);
+        values.put("selling_price", newSellingPrice);
+
+        // Get current buying price to calculate new profit
+        Cursor cursor = db.rawQuery(
+                "SELECT buying_price FROM product_details WHERE product_name = ? AND weight = ? AND flavour = ?",
+                new String[]{productName, weight, flavour}
+        );
+
+        if (cursor.moveToFirst()) {
+            int buyingPrice = cursor.getInt(0);
+            values.put("profit", newSellingPrice - buyingPrice); // Calculates new profit
+        }
+        cursor.close();
 
         int rowsAffected = db.update("product_details", values,
                 "product_name = ? AND weight = ? AND flavour = ?",

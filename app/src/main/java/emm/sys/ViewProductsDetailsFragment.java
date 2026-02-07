@@ -1,8 +1,10 @@
 package emm.sys;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -17,6 +19,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
+import androidx.cardview.widget.CardView;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -40,6 +45,7 @@ public class ViewProductsDetailsFragment extends Fragment {
     private RecyclerView productsRecyclerView;
     private ProductAdapter productAdapter;
     private List<Product> productList;
+    private static List<Product> originalProductList; // Store original data for filtering
     private DBHelper dbHelper;
 
     private TextView totalProductsText, averagePriceText, uniqueProductsText;
@@ -96,7 +102,27 @@ public class ViewProductsDetailsFragment extends Fragment {
 
     private void setupRecyclerView() {
         productList = new ArrayList<>();
-        productAdapter = new ProductAdapter(productList);
+        originalProductList = new ArrayList<>();
+        productAdapter = new ProductAdapter(productList); // Fixed: Removed Context parameter
+
+        // Set up the click listener
+        productAdapter.setOnProductClickListener(new ProductAdapter.OnProductClickListener() {
+            @Override
+            public void onEditProduct(Product product) {
+                editProduct(product);
+            }
+
+            @Override
+            public void onDeleteProduct(Product product) {
+                deleteProduct(product);
+            }
+
+            @Override
+            public void onProductDetails(Product product) {
+                showProductDetailsDialog(product);
+            }
+        });
+
         productsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         productsRecyclerView.setAdapter(productAdapter);
     }
@@ -247,21 +273,25 @@ public class ViewProductsDetailsFragment extends Fragment {
     }
 
     private void deleteAllProducts() {
-        // This would require a new method in DBHelper to delete all products
-        // For now, show a message
-        Toast.makeText(getActivity(),
-                "Delete all functionality requires database method implementation",
-                Toast.LENGTH_LONG).show();
+        boolean success = dbHelper.deleteAllProducts();
+        if (success) {
+            Toast.makeText(getActivity(), "All products deleted successfully", Toast.LENGTH_SHORT).show();
+            loadProductData(); // Refresh the list
+        } else {
+            Toast.makeText(getActivity(), "Failed to delete products", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void loadProductData() {
         productList.clear();
+        originalProductList.clear();
         Cursor cursor = dbHelper.getAllProductDetails();
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
                 Product product = extractProductFromCursor(cursor);
                 productList.add(product);
+                originalProductList.add(product); // Store original data
             } while (cursor.moveToNext());
 
             cursor.close();
@@ -288,7 +318,10 @@ public class ViewProductsDetailsFragment extends Fragment {
         product.setProductName(cursor.getString(cursor.getColumnIndexOrThrow("product_name")));
         product.setWeight(cursor.getString(cursor.getColumnIndexOrThrow("weight")));
         product.setFlavour(cursor.getString(cursor.getColumnIndexOrThrow("flavour")));
-        product.setPrice(cursor.getInt(cursor.getColumnIndexOrThrow("price")));
+        // Updated to read new columns
+        product.setBuyingPrice(cursor.getInt(cursor.getColumnIndexOrThrow("buying_price")));
+        product.setSellingPrice(cursor.getInt(cursor.getColumnIndexOrThrow("selling_price")));
+        product.setProfit(cursor.getInt(cursor.getColumnIndexOrThrow("profit")));
         product.setTimestamp(cursor.getString(cursor.getColumnIndexOrThrow("timestamp")));
 
         return product;
@@ -306,13 +339,13 @@ public class ViewProductsDetailsFragment extends Fragment {
         int totalProducts = productList.size();
         totalProductsText.setText(String.valueOf(totalProducts));
 
-        // Average price
-        int totalPrice = 0;
+        // Average selling price
+        int totalSellingPrice = 0;
         for (Product product : productList) {
-            totalPrice += product.getPrice();
+            totalSellingPrice += product.getSellingPrice();
         }
-        int averagePrice = totalPrice / totalProducts;
-        averagePriceText.setText("KES " + NumberFormat.getInstance().format(averagePrice));
+        int averageSellingPrice = totalSellingPrice / totalProducts;
+        averagePriceText.setText("KES " + NumberFormat.getInstance().format(averageSellingPrice));
 
         // Unique products (based on product name)
         Set<String> uniqueProductNames = new HashSet<>();
@@ -337,7 +370,6 @@ public class ViewProductsDetailsFragment extends Fragment {
     }
 
     private void sortProductsByName() {
-        // Using Collections.sort() instead of List.sort() for API level 23 compatibility
         Collections.sort(productList, new Comparator<Product>() {
             @Override
             public int compare(Product p1, Product p2) {
@@ -348,11 +380,10 @@ public class ViewProductsDetailsFragment extends Fragment {
     }
 
     private void sortProductsByPrice() {
-        // Using Collections.sort() instead of List.sort() for API level 23 compatibility
         Collections.sort(productList, new Comparator<Product>() {
             @Override
             public int compare(Product p1, Product p2) {
-                return Integer.compare(p1.getPrice(), p2.getPrice());
+                return Integer.compare(p1.getSellingPrice(), p2.getSellingPrice());
             }
         });
         productAdapter.notifyDataSetChanged();
@@ -361,7 +392,7 @@ public class ViewProductsDetailsFragment extends Fragment {
     private void filterProducts(String query) {
         List<Product> filteredList = new ArrayList<>();
 
-        for (Product product : productList) {
+        for (Product product : originalProductList) { // Filter from original data
             if (product.getProductName().toLowerCase().contains(query.toLowerCase()) ||
                     product.getWeight().toLowerCase().contains(query.toLowerCase()) ||
                     product.getFlavour().toLowerCase().contains(query.toLowerCase())) {
@@ -398,13 +429,13 @@ public class ViewProductsDetailsFragment extends Fragment {
         EditText editProductName = dialogView.findViewById(R.id.editProductName);
         EditText editWeight = dialogView.findViewById(R.id.editWeight);
         EditText editFlavour = dialogView.findViewById(R.id.editFlavour);
-        EditText editPrice = dialogView.findViewById(R.id.editPrice);
+        EditText editSellingPrice = dialogView.findViewById(R.id.editPrice); // Using for selling price
 
         // Set current values
         editProductName.setText(product.getProductName());
         editWeight.setText(product.getWeight());
         editFlavour.setText(product.getFlavour());
-        editPrice.setText(String.valueOf(product.getPrice()));
+        editSellingPrice.setText(String.valueOf(product.getSellingPrice()));
 
         builder.setPositiveButton("Update", new DialogInterface.OnClickListener() {
             @Override
@@ -412,15 +443,20 @@ public class ViewProductsDetailsFragment extends Fragment {
                 String newName = editProductName.getText().toString().trim();
                 String newWeight = editWeight.getText().toString().trim();
                 String newFlavour = editFlavour.getText().toString().trim();
-                String newPriceStr = editPrice.getText().toString().trim();
+                String newSellingPriceStr = editSellingPrice.getText().toString().trim();
 
-                if (newName.isEmpty() || newWeight.isEmpty() || newFlavour.isEmpty() || newPriceStr.isEmpty()) {
+                if (newName.isEmpty() || newWeight.isEmpty() || newFlavour.isEmpty() || newSellingPriceStr.isEmpty()) {
                     Toast.makeText(getActivity(), "All fields are required", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 try {
-                    int newPrice = Integer.parseInt(newPriceStr);
+                    int newSellingPrice = Integer.parseInt(newSellingPriceStr);
+
+                    if (newSellingPrice <= 0) {
+                        Toast.makeText(getActivity(), "Selling price must be greater than 0", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
                     // Check if product with new details already exists (different ID)
                     if (!newName.equals(product.getProductName()) ||
@@ -436,14 +472,13 @@ public class ViewProductsDetailsFragment extends Fragment {
                         }
                     }
 
-                    // For now, we can only update price with existing DBHelper method
-                    // You might need to add a method to update all fields
-                    boolean success = dbHelper.updateProductPrice(product.getProductName(),
-                            product.getWeight(), product.getFlavour(), newPrice);
+                    // Update using the fixed method
+                    boolean success = dbHelper.updateProductDetails(product.getId(), newName, newWeight,
+                            newFlavour, product.getBuyingPrice(), newSellingPrice);
 
                     if (success) {
                         Toast.makeText(getActivity(),
-                                "Product price updated successfully",
+                                "Product updated successfully",
                                 Toast.LENGTH_SHORT).show();
                         loadProductData(); // Refresh list
                     } else {
@@ -470,10 +505,13 @@ public class ViewProductsDetailsFragment extends Fragment {
         builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                // You need to add a delete method in DBHelper
-                Toast.makeText(getActivity(),
-                        "Delete functionality requires database method implementation",
-                        Toast.LENGTH_LONG).show();
+                boolean success = dbHelper.deleteProduct(product.getId());
+                if (success) {
+                    Toast.makeText(getActivity(), "Product deleted successfully", Toast.LENGTH_SHORT).show();
+                    loadProductData(); // Refresh list
+                } else {
+                    Toast.makeText(getActivity(), "Failed to delete product", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -481,7 +519,25 @@ public class ViewProductsDetailsFragment extends Fragment {
         builder.show();
     }
 
-    private String formatTimestamp(String timestamp) {
+    // Add missing method for product details dialog
+    private void showProductDetailsDialog(Product product) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Product Details");
+
+        String details = "Product: " + product.getProductName() + " " +
+        "Weight: " + product.getWeight() + " " +
+        "Flavour: " + product.getFlavour() + " " +
+        "Buying Price: KES " + NumberFormat.getInstance().format(product.getBuyingPrice()) + " " +
+        "Selling Price: KES " + NumberFormat.getInstance().format(product.getSellingPrice()) + " " +
+        "Profit: KES " + NumberFormat.getInstance().format(product.getProfit()) + " " +
+         "Added: " + formatTimestamp(product.getTimestamp());
+
+        builder.setMessage(details);
+        builder.setPositiveButton("OK", null);
+        builder.show();
+    }
+
+    private static String formatTimestamp(String timestamp) {
         try {
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
             SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault());
@@ -493,7 +549,7 @@ public class ViewProductsDetailsFragment extends Fragment {
         }
     }
 
-    private String getTimeAgo(String timestamp) {
+    private static String getTimeAgo(String timestamp) {
         try {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
             Date past = format.parse(timestamp);
@@ -533,7 +589,9 @@ public class ViewProductsDetailsFragment extends Fragment {
         private String productName;
         private String weight;
         private String flavour;
-        private int price;
+        private int buyingPrice;
+        private int sellingPrice;
+        private int profit;
         private String timestamp;
 
         // Getters and Setters
@@ -549,19 +607,44 @@ public class ViewProductsDetailsFragment extends Fragment {
         public String getFlavour() { return flavour; }
         public void setFlavour(String flavour) { this.flavour = flavour; }
 
-        public int getPrice() { return price; }
-        public void setPrice(int price) { this.price = price; }
+        public int getBuyingPrice() { return buyingPrice; }
+        public void setBuyingPrice(int buyingPrice) { this.buyingPrice = buyingPrice; }
+
+        public int getSellingPrice() { return sellingPrice; }
+        public void setSellingPrice(int sellingPrice) { this.sellingPrice = sellingPrice; }
+
+        public int getProfit() { return profit; }
+        public void setProfit(int profit) { this.profit = profit; }
 
         public String getTimestamp() { return timestamp; }
         public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
+
+        // Backward compatibility - return selling price as main price
+        @Deprecated
+        public int getPrice() { return sellingPrice; }
+
+        @Deprecated
+        public void setPrice(int price) { this.sellingPrice = price; }
     }
 
-    // RecyclerView Adapter
-    private class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
+    // RecyclerView Adapter (Fixed Inner Class)
+    public static class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
         private List<Product> productList;
+        private OnProductClickListener listener;
+
+        // Interface for handling product clicks
+        public interface OnProductClickListener {
+            void onEditProduct(Product product);
+            void onDeleteProduct(Product product);
+            void onProductDetails(Product product);
+        }
 
         public ProductAdapter(List<Product> productList) {
             this.productList = productList;
+        }
+
+        public void setOnProductClickListener(OnProductClickListener listener) {
+            this.listener = listener;
         }
 
         public void updateList(List<Product> newList) {
@@ -573,62 +656,83 @@ public class ViewProductsDetailsFragment extends Fragment {
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.recycler_product_details, parent, false);
+                    .inflate(R.layout.item_product, parent, false);
             return new ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Product product = productList.get(position);
+            NumberFormat formatter = NumberFormat.getInstance();
 
+            // Basic product information
             holder.productNameText.setText(product.getProductName());
             holder.productWeightText.setText(product.getWeight());
             holder.productFlavourText.setText(product.getFlavour());
-            holder.productPriceText.setText("KES " + NumberFormat.getInstance().format(product.getPrice()));
-            holder.productTimestampText.setText(formatTimestamp(product.getTimestamp()));
             holder.productIdText.setText("#" + String.format("%03d", product.getId()));
-            holder.lastUpdatedText.setText(getTimeAgo(product.getTimestamp()));
 
-            // Set click listeners
-            holder.editButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    editProduct(product);
+            // Pricing information
+            holder.buyingPriceText.setText("Buy: KES " + formatter.format(product.getBuyingPrice()));
+            holder.sellingPriceText.setText("KES " + formatter.format(product.getSellingPrice()));
+            holder.profitText.setText("Profit: KES " + formatter.format(product.getProfit()));
+
+            // Profit margin calculation
+            double profitMargin = 0;
+            if (product.getBuyingPrice() > 0) {
+                profitMargin = ((double) product.getProfit() / product.getBuyingPrice()) * 100;
+            }
+            holder.profitMarginText.setText(String.format("%.1f%% margin", profitMargin));
+
+            // FIXED: Set profit color using Color.parseColor
+            if (product.getProfit() > 0) {
+                holder.profitText.setTextColor(Color.parseColor("#4CAF50")); // Green
+            } else if (product.getProfit() < 0) {
+                holder.profitText.setTextColor(Color.parseColor("#F44336")); // Red
+            } else {
+                holder.profitText.setTextColor(Color.parseColor("#757575")); // Gray
+            }
+
+            // Timestamp information
+            holder.timestampText.setText(formatTimestamp(product.getTimestamp()));
+            holder.timeAgoText.setText(getTimeAgo(product.getTimestamp()));
+
+            // Click listeners
+            holder.editButton.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onEditProduct(product);
                 }
             });
 
-            holder.deleteButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    deleteProduct(product);
+            holder.deleteButton.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onDeleteProduct(product);
                 }
             });
 
             // Expand/Collapse functionality
             final boolean[] isExpanded = {false};
-            holder.expandButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    isExpanded[0] = !isExpanded[0];
+            holder.expandButton.setOnClickListener(v -> {
+                isExpanded[0] = !isExpanded[0];
 
-                    if (isExpanded[0]) {
-                        holder.extraDetailsLayout.setVisibility(View.VISIBLE);
-                        holder.expandButton.setRotation(180); // Rotate arrow
-                    } else {
-                        holder.extraDetailsLayout.setVisibility(View.GONE);
-                        holder.expandButton.setRotation(0);
-                    }
+                if (isExpanded[0]) {
+                    holder.extraDetailsLayout.setVisibility(View.VISIBLE);
+                    holder.expandButton.setRotation(180);
+                    holder.expandButton.setContentDescription("Collapse details");
+                } else {
+                    holder.extraDetailsLayout.setVisibility(View.GONE);
+                    holder.expandButton.setRotation(0);
+                    holder.expandButton.setContentDescription("Expand details");
                 }
             });
 
-            // Card click listener
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // Toggle expand/collapse on card click
-                    holder.expandButton.performClick();
+            // Card click listener for details
+            holder.itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onProductDetails(product);
                 }
             });
+
+            // REMOVED: Long click popup menu (since resource doesn't exist)
         }
 
         @Override
@@ -636,30 +740,69 @@ public class ViewProductsDetailsFragment extends Fragment {
             return productList.size();
         }
 
+        // ViewHolder class
         class ViewHolder extends RecyclerView.ViewHolder {
-            TextView productNameText, productWeightText, productFlavourText,
-                    productPriceText, productTimestampText, productIdText, lastUpdatedText;
-            ImageView editButton, deleteButton, expandButton; // Changed from ImageButton to ImageView
+            // Basic information
+            TextView productNameText, productWeightText, productFlavourText, productIdText;
+
+            // Pricing information
+            TextView buyingPriceText, sellingPriceText, profitText, profitMarginText;
+
+            // Timestamp information
+            TextView timestampText, timeAgoText;
+
+            // Action buttons
+            ImageView editButton, deleteButton, expandButton;
+
+            // Layouts
             LinearLayout extraDetailsLayout;
+            CardView cardView;
 
             ViewHolder(View itemView) {
                 super(itemView);
 
+                // Initialize basic information views
                 productNameText = itemView.findViewById(R.id.productNameText);
                 productWeightText = itemView.findViewById(R.id.productWeightText);
                 productFlavourText = itemView.findViewById(R.id.productFlavourText);
-                productPriceText = itemView.findViewById(R.id.productPriceText);
-                productTimestampText = itemView.findViewById(R.id.productTimestampText);
                 productIdText = itemView.findViewById(R.id.productIdText);
-                lastUpdatedText = itemView.findViewById(R.id.lastUpdatedText);
 
-                // Change these from ImageButton to ImageView
+                // Initialize pricing views
+                buyingPriceText = itemView.findViewById(R.id.buyingPriceText);
+                sellingPriceText = itemView.findViewById(R.id.sellingPriceText);
+                profitText = itemView.findViewById(R.id.profitText);
+                profitMarginText = itemView.findViewById(R.id.profitMarginText);
+
+                // Initialize timestamp views
+                timestampText = itemView.findViewById(R.id.timestampText);
+                timeAgoText = itemView.findViewById(R.id.timeAgoText);
+
+                // Initialize action buttons
                 editButton = itemView.findViewById(R.id.editButton);
                 deleteButton = itemView.findViewById(R.id.deleteButton);
                 expandButton = itemView.findViewById(R.id.expandButton);
 
+                // Initialize layouts
                 extraDetailsLayout = itemView.findViewById(R.id.extraDetailsLayout);
+                cardView = itemView.findViewById(R.id.cardView);
             }
+        }
+
+        // REMOVED: showQuickActionsPopup method (since menu resource doesn't exist)
+
+        // Filter products based on search query
+        public void filter(String query) {
+            List<Product> filteredList = new ArrayList<>();
+
+            for (Product product : originalProductList) {
+                if (product.getProductName().toLowerCase().contains(query.toLowerCase()) ||
+                        product.getWeight().toLowerCase().contains(query.toLowerCase()) ||
+                        product.getFlavour().toLowerCase().contains(query.toLowerCase())) {
+                    filteredList.add(product);
+                }
+            }
+
+            updateList(filteredList);
         }
     }
 }
