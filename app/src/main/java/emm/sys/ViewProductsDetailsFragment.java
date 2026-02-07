@@ -426,16 +426,38 @@ public class ViewProductsDetailsFragment extends Fragment {
         View dialogView = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_edit_product, null);
         builder.setView(dialogView);
 
+        // Initialize all EditTexts
         EditText editProductName = dialogView.findViewById(R.id.editProductName);
         EditText editWeight = dialogView.findViewById(R.id.editWeight);
         EditText editFlavour = dialogView.findViewById(R.id.editFlavour);
-        EditText editSellingPrice = dialogView.findViewById(R.id.editPrice); // Using for selling price
+        EditText editBuyingPrice = dialogView.findViewById(R.id.editBuyingPrice);
+        EditText editSellingPrice = dialogView.findViewById(R.id.editSellingPrice);
+        TextView profitDisplay = dialogView.findViewById(R.id.profitDisplay);
 
         // Set current values
         editProductName.setText(product.getProductName());
         editWeight.setText(product.getWeight());
         editFlavour.setText(product.getFlavour());
+        editBuyingPrice.setText(String.valueOf(product.getBuyingPrice()));
         editSellingPrice.setText(String.valueOf(product.getSellingPrice()));
+        profitDisplay.setText("Profit: KES " + NumberFormat.getInstance().format(product.getProfit()));
+
+        // Add TextWatchers for real-time profit calculation
+        TextWatcher profitCalculator = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                calculateProfit(editBuyingPrice, editSellingPrice, profitDisplay);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        };
+
+        editBuyingPrice.addTextChangedListener(profitCalculator);
+        editSellingPrice.addTextChangedListener(profitCalculator);
 
         builder.setPositiveButton("Update", new DialogInterface.OnClickListener() {
             @Override
@@ -443,18 +465,33 @@ public class ViewProductsDetailsFragment extends Fragment {
                 String newName = editProductName.getText().toString().trim();
                 String newWeight = editWeight.getText().toString().trim();
                 String newFlavour = editFlavour.getText().toString().trim();
+                String newBuyingPriceStr = editBuyingPrice.getText().toString().trim();
                 String newSellingPriceStr = editSellingPrice.getText().toString().trim();
 
-                if (newName.isEmpty() || newWeight.isEmpty() || newFlavour.isEmpty() || newSellingPriceStr.isEmpty()) {
+                // Validate all fields
+                if (newName.isEmpty() || newWeight.isEmpty() || newFlavour.isEmpty() ||
+                        newBuyingPriceStr.isEmpty() || newSellingPriceStr.isEmpty()) {
                     Toast.makeText(getActivity(), "All fields are required", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 try {
+                    int newBuyingPrice = Integer.parseInt(newBuyingPriceStr);
                     int newSellingPrice = Integer.parseInt(newSellingPriceStr);
+
+                    // Validate prices
+                    if (newBuyingPrice <= 0) {
+                        Toast.makeText(getActivity(), "Buying price must be greater than 0", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
                     if (newSellingPrice <= 0) {
                         Toast.makeText(getActivity(), "Selling price must be greater than 0", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    if (newSellingPrice <= newBuyingPrice) {
+                        Toast.makeText(getActivity(), "Selling price must be greater than buying price", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -472,14 +509,16 @@ public class ViewProductsDetailsFragment extends Fragment {
                         }
                     }
 
-                    // Update using the fixed method
+                    // ENHANCED: Update with all fields including profit calculation
                     boolean success = dbHelper.updateProductDetails(product.getId(), newName, newWeight,
-                            newFlavour, product.getBuyingPrice(), newSellingPrice);
+                            newFlavour, newBuyingPrice, newSellingPrice);
 
                     if (success) {
+                        int profit = newSellingPrice - newBuyingPrice;
                         Toast.makeText(getActivity(),
-                                "Product updated successfully",
-                                Toast.LENGTH_SHORT).show();
+                                "Product updated successfully! " +
+                                "Profit: KES " + NumberFormat.getInstance().format(profit),
+                                Toast.LENGTH_LONG).show();
                         loadProductData(); // Refresh list
                     } else {
                         Toast.makeText(getActivity(),
@@ -488,7 +527,7 @@ public class ViewProductsDetailsFragment extends Fragment {
                     }
 
                 } catch (NumberFormatException e) {
-                    Toast.makeText(getActivity(), "Invalid price format", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Please enter valid numbers for prices", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -497,20 +536,65 @@ public class ViewProductsDetailsFragment extends Fragment {
         builder.show();
     }
 
+    // Helper method for real-time profit calculation
+    private void calculateProfit(EditText buyingPriceEdit, EditText sellingPriceEdit, TextView profitDisplay) {
+        try {
+            String buyingStr = buyingPriceEdit.getText().toString().trim();
+            String sellingStr = sellingPriceEdit.getText().toString().trim();
+
+            if (!buyingStr.isEmpty() && !sellingStr.isEmpty()) {
+                int buyingPrice = Integer.parseInt(buyingStr);
+                int sellingPrice = Integer.parseInt(sellingStr);
+                int profit = sellingPrice - buyingPrice;
+
+                profitDisplay.setText("Profit: KES " + NumberFormat.getInstance().format(profit));
+
+                // Set color based on profit
+                if (profit > 0) {
+                    profitDisplay.setTextColor(Color.parseColor("#4CAF50")); // Green
+                } else if (profit < 0) {
+                    profitDisplay.setTextColor(Color.parseColor("#F44336")); // Red
+                } else {
+                    profitDisplay.setTextColor(Color.parseColor("#757575")); // Gray
+                }
+            } else {
+                profitDisplay.setText("Profit: KES 0");
+                profitDisplay.setTextColor(Color.parseColor("#757575"));
+            }
+        } catch (NumberFormatException e) {
+            profitDisplay.setText("Profit: Invalid");
+            profitDisplay.setTextColor(Color.parseColor("#F44336"));
+        }
+    }
+
     private void deleteProduct(Product product) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Delete Product");
-        builder.setMessage("Are you sure you want to delete '" + product.getProductName() + "'?");
+        // ENHANCED: Show more product details in confirmation
+        String message = "Are you sure you want to delete this product? " +
+        "Product: " + product.getProductName() + " " +
+        "Weight: " + product.getWeight() + " " +
+        "Flavour: " + product.getFlavour() + " " +
+        "ID: #" + String.format("%03d", product.getId()) + " " +
+        "This action cannot be undone.";
+
+        builder.setMessage(message);
 
         builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                // FIXED: Using product.getId() instead of product name
                 boolean success = dbHelper.deleteProduct(product.getId());
+
                 if (success) {
-                    Toast.makeText(getActivity(), "Product deleted successfully", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(),
+                            "Product #" + product.getId() + " deleted successfully",
+                            Toast.LENGTH_SHORT).show();
                     loadProductData(); // Refresh list
                 } else {
-                    Toast.makeText(getActivity(), "Failed to delete product", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(),
+                            "Failed to delete product #" + product.getId(),
+                            Toast.LENGTH_SHORT).show();
                 }
             }
         });

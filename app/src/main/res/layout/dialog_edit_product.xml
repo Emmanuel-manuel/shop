@@ -29,12 +29,70 @@
         android:inputType="text"
         android:layout_marginBottom="8dp"/>
 
-    <EditText
-        android:id="@+id/editPrice"
+    <!-- Buying Price Field -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Price"
-        android:inputType="number"
-        android:layout_marginBottom="8dp"/>
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <EditText
+            android:id="@+id/editBuyingPrice"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Buying Price"
+            android:inputType="numberDecimal"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="KES"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
+
+    <!-- Selling Price Field -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <EditText
+            android:id="@+id/editSellingPrice"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Selling Price"
+            android:inputType="numberDecimal"
+            android:layout_marginEnd="4dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="KES"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical"/>
+    </LinearLayout>
+
+    <!-- Profit Display (Read-only) -->
+    <TextView
+        android:id="@+id/profitDisplay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Profit: KES 0"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:gravity="center"
+        android:padding="8dp"
+        android:background="#F0F0F0"
+        android:layout_marginTop="8dp"/>
 
 </LinearLayout>

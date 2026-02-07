@@ -285,6 +285,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put("flavour", flavour);
         values.put("buying_price", buyingPrice);
         values.put("selling_price", sellingPrice);
+        values.put("profit", sellingPrice - buyingPrice); // Calculates profit
 
         int rowsAffected = db.update("product_details", values, "id = ?",
                 new String[]{String.valueOf(id)});
