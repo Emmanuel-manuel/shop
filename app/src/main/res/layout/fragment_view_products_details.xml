@@ -6,28 +6,28 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/background"
-    android:padding="8dp">
+    android:padding="10dp">
 
     <!-- Search and Filter Section -->
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp"
-        android:layout_marginBottom="2dp">
+        app:cardCornerRadius="2dp"
+        app:cardElevation="9dp"
+        android:layout_marginBottom="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="4dp">
 
                 <TextView
                     android:id="@+id/textViewProductCatalog"
@@ -47,7 +47,7 @@
                     android:layout_height="wrap_content"
                     android:src="@drawable/ic_more_vert"
                     app:backgroundTint="@color/primary"
-                    app:elevation="8dp"
+                    app:elevation="6dp"
                     app:tint="@color/white" />
 
             </LinearLayout>
@@ -79,7 +79,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="25dp"
                 app:cardElevation="2dp"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="6dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -134,7 +134,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="All"
+                    android:text="Display All Products"
                     android:textSize="12sp"
                     android:background="@drawable/button_filter_selected"
                     android:layout_marginEnd="4dp"/>
@@ -144,7 +144,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Name"
+                    android:text="Sort by Name"
                     android:textSize="12sp"
                     android:background="@drawable/button_filter_unselected"
                     android:layout_marginStart="4dp"
@@ -155,7 +155,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Price"
+                    android:text="Sort by Price"
                     android:textSize="12sp"
                     android:background="@drawable/button_filter_unselected"
                     android:layout_marginStart="4dp"/>
@@ -178,7 +178,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="12dp"
+            android:padding="4dp"
             android:background="@drawable/stats_bg">
 
             <LinearLayout
@@ -300,25 +300,25 @@
                     android:textColor="@color/primary_dark"
                     android:textSize="14sp"/>
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Weight"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary_dark"
-                    android:textSize="14sp"
-                    android:gravity="center"/>
+<!--                <TextView-->
+<!--                    android:layout_width="0dp"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_weight="1"-->
+<!--                    android:text="Weight"-->
+<!--                    android:textStyle="bold"-->
+<!--                    android:textColor="@color/primary_dark"-->
+<!--                    android:textSize="14sp"-->
+<!--                    android:gravity="center"/>-->
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Price"
+                    android:text="Selling Price"
                     android:textStyle="bold"
                     android:textColor="@color/primary_dark"
                     android:textSize="14sp"
-                    android:gravity="end"/>
+                    />
 
             </LinearLayout>
 
