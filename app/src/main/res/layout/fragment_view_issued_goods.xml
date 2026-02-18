@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="4dp">
 
         <!-- Header Card -->
         <androidx.cardview.widget.CardView
@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="2dp"
             app:cardBackgroundColor="@color/surface">
 
             <LinearLayout
@@ -83,7 +83,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
             app:cardElevation="2dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="2dp"
             app:cardBackgroundColor="@color/surface">
 
             <LinearLayout

@@ -36,7 +36,7 @@ public class InventoryItem {
 
     private boolean isLowStock;
 
-    // Add this method
+    // Added this method to check stock qty
     public boolean isLowStock() {
         return balance <= 5; // Example: low stock if balance is 5 or less
     }

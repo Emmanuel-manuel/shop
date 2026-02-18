@@ -24,7 +24,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
 
-        super(context, "Shop.db", null, 8);
+        super(context, "Shop.db", null, 9);
     }
 
     @Override
@@ -66,7 +66,37 @@ public class DBHelper extends SQLiteOpenHelper {
                 "station TEXT," +
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
+
+        // Create sales table
+        db.execSQL("CREATE TABLE sales(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "market TEXT," +
+                "cust_name TEXT," +
+                "product_name TEXT," +
+                "selling_price INTEGER," +
+                "quantity INTEGER," +
+                "bill INTEGER," +
+                "payment_mode TEXT," +
+                "total_bill INTEGER," +
+                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+
+        // Create to_pay table
+        db.execSQL("CREATE TABLE to_pay(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "market TEXT," +
+                "cust_name TEXT," +
+                "product_name TEXT," +
+                "selling_price INTEGER," +
+                "quantity INTEGER," +
+                "bill INTEGER," +
+                "payment_mode TEXT," +
+                "total_bill INTEGER," +
+                "balance INTEGER," +
+                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
     }
+
+
+
     // ............ END OF METHODS FOR CREATING NEW TABLES IN THE DB ...............
 
     @Override
@@ -117,6 +147,35 @@ public class DBHelper extends SQLiteOpenHelper {
 
             // Update existing records to calculate profit
             db.execSQL("UPDATE product_details SET profit = selling_price - buying_price WHERE profit = 0");
+        }
+
+        if (oldVersion < 9) {
+            // Create sales table
+            db.execSQL("CREATE TABLE IF NOT EXISTS sales(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "market TEXT," +
+                    "cust_name TEXT," +
+                    "product_name TEXT," +
+                    "selling_price INTEGER," +
+                    "quantity INTEGER," +
+                    "bill INTEGER," +
+                    "payment_mode TEXT," +
+                    "total_bill INTEGER," +
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+
+            // Create to_pay table
+            db.execSQL("CREATE TABLE IF NOT EXISTS to_pay(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "market TEXT," +
+                    "cust_name TEXT," +
+                    "product_name TEXT," +
+                    "selling_price INTEGER," +
+                    "quantity INTEGER," +
+                    "bill INTEGER," +
+                    "payment_mode TEXT," +
+                    "total_bill INTEGER," +
+                    "balance INTEGER," +
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
         }
 
     }
@@ -380,6 +439,48 @@ public class DBHelper extends SQLiteOpenHelper {
         return rowsAffected > 0;
     }
 
+    public boolean updateSpecificInventoryBalance(String productName, String weight, String flavour, int newBalance) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Get today's date
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        // Update the specific product variant for today
+        ContentValues values = new ContentValues();
+        values.put("balance", newBalance);
+
+        int rowsAffected = db.update("inventory", values,
+                "product_name = ? AND weight = ? AND flavour = ? AND date(timestamp) = ?",
+                new String[]{productName, weight, flavour, todayDate});
+
+        return rowsAffected > 0;
+    }
+
+    // to delete the top if the bottom works just fine
+
+
+    // ============ Method to get current balance for specific product variant ============
+    public int getSpecificProductBalance(String productName, String weight, String flavour) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int balance = 0;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        Cursor cursor = db.rawQuery(
+                "SELECT balance FROM inventory WHERE product_name = ? AND weight = ? AND flavour = ? AND date(timestamp) = ? ORDER BY timestamp DESC LIMIT 1",
+                new String[]{productName, weight, flavour, todayDate}
+        );
+
+        if (cursor.moveToFirst()) {
+            balance = cursor.getInt(0);
+        }
+        cursor.close();
+
+        return balance;
+    }
+
     // ====== METHODS FOR MANAGING INVENTORY ========================
     public Cursor getTodayInventory() {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -605,8 +706,8 @@ public class DBHelper extends SQLiteOpenHelper {
             long result = db.insert("issue_goods", null, values);
 
             if (result != -1) {
-                // Update inventory balance with the new balance value
-                boolean updateSuccess = updateInventoryBalance(productName, newBalance);
+                // FIXED: Update inventory balance for the specific product variant
+                boolean updateSuccess = updateSpecificInventoryBalance(productName, weight, flavour, newBalance);
                 if (updateSuccess) {
                     db.setTransactionSuccessful();
                     return true;
@@ -733,8 +834,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         db.beginTransaction();
         try {
-            // Update inventory balance with the new balance value
-            boolean balanceUpdated = updateInventoryBalance(productName, newBalance);
+            // FIXED: Update inventory balance for the specific product variant
+            boolean balanceUpdated = updateSpecificInventoryBalance(productName, weight, flavour, newBalance);
 
             if (balanceUpdated) {
                 // Update issued goods record
@@ -757,6 +858,40 @@ public class DBHelper extends SQLiteOpenHelper {
             db.endTransaction();
         }
     }
+
+    // ============ Method to get balance for specific product+weight+flavour combination ============
+    public Cursor getSpecificInventoryDetails(String productName, String weight, String flavour) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Get today's date in device's local timezone (YYYY-MM-DD format)
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        return db.rawQuery(
+                "SELECT weight, flavour, balance FROM inventory " +
+                        "WHERE product_name = ? AND weight = ? AND flavour = ? AND date(timestamp) = ? " +
+                        "ORDER BY timestamp DESC LIMIT 1",
+                new String[]{productName, weight, flavour, todayDate}
+        );
+    }
+
+    // ============ Method to check if specific product variant exists today ============
+    public boolean checkSpecificProductExists(String productName, String weight, String flavour) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM inventory WHERE product_name = ? AND weight = ? AND flavour = ? AND date(timestamp) = ? LIMIT 1",
+                new String[]{productName, weight, flavour, todayDate}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
 
     //    =============== Method for date filtering in ViewIssuedGoodsFragment ===========
     public Cursor getIssuedGoodsByDate(String date) {
@@ -890,6 +1025,82 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
+// ++++++++++++++++++++ GENESIS OF SALES RELATED METHODS +++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    // Sales related methods
+    public boolean insertSale(String market, String custName, String productName,
+                              int sellingPrice, int quantity, int bill, String paymentMode, int totalBill) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("market", market);
+        values.put("cust_name", custName);
+        values.put("product_name", productName);
+        values.put("selling_price", sellingPrice);
+        values.put("quantity", quantity);
+        values.put("bill", bill);
+        values.put("payment_mode", paymentMode);
+        values.put("total_bill", totalBill);
+
+        long result = db.insert("sales", null, values);
+        return result != -1;
+    }
+
+    public boolean insertToPay(String market, String custName, String productName,
+                               int sellingPrice, int quantity, int bill, String paymentMode,
+                               int totalBill, int balance) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("market", market);
+        values.put("cust_name", custName);
+        values.put("product_name", productName);
+        values.put("selling_price", sellingPrice);
+        values.put("quantity", quantity);
+        values.put("bill", bill);
+        values.put("payment_mode", paymentMode);
+        values.put("total_bill", totalBill);
+        values.put("balance", balance);
+
+        long result = db.insert("to_pay", null, values);
+        return result != -1;
+    }
+
+    public List<String> getDistinctMarkets() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> markets = new ArrayList<>();
+        Cursor cursor = db.rawQuery("SELECT DISTINCT market FROM sales WHERE market IS NOT NULL AND market != '' ORDER BY market", null);
+
+        while (cursor.moveToNext()) {
+            markets.add(cursor.getString(0));
+        }
+        cursor.close();
+        return markets;
+    }
+
+    public List<String> getDistinctCustomers() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> customers = new ArrayList<>();
+        Cursor cursor = db.rawQuery("SELECT DISTINCT cust_name FROM sales WHERE cust_name IS NOT NULL AND cust_name != '' ORDER BY cust_name", null);
+
+        while (cursor.moveToNext()) {
+            customers.add(cursor.getString(0));
+        }
+        cursor.close();
+        return customers;
+    }
+
+    public int getProductSellingPrice(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int price = 0;
+
+        Cursor cursor = db.rawQuery("SELECT selling_price FROM product_details WHERE product_name = ? LIMIT 1",
+                new String[]{productName});
+
+        if (cursor.moveToFirst()) {
+            price = cursor.getInt(0);
+        }
+        cursor.close();
+        return price;
+    }
 
 
 

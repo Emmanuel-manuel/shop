@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sales Interface"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:gravity="center"
+                android:padding="16dp"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Customer Info Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Customer Information"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/editMarket"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:hint="Market"
+                        android:background="@drawable/edittext_bg"
+                        android:padding="12dp"
+                        android:layout_marginEnd="8dp"/>
+
+                    <AutoCompleteTextView
+                        android:id="@+id/editCustName"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:hint="Customer Name"
+                        android:background="@drawable/edittext_bg"
+                        android:padding="12dp"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Product Selection Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Product Selection"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <Spinner
+                        android:id="@+id/spinnerProduct"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="2"
+                        android:background="@drawable/edittext_bg"
+                        android:padding="12dp"/>
+
+                    <TextView
+                        android:id="@+id/sellingPriceTextView"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="KES 0"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary"
+                        android:gravity="center"
+                        android:background="@drawable/edittext_bg_disabled"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <!-- Discount Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical">
+
+                    <RadioButton
+                        android:id="@+id/discountRadioButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Discount"
+                        android:textColor="@color/accent"/>
+
+                    <EditText
+                        android:id="@+id/discountAmountEditText"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:hint="Discount Amount"
+                        android:inputType="numberDecimal"
+                        android:background="@drawable/edittext_bg"
+                        android:padding="12dp"
+                        android:layout_marginStart="8dp"
+                        android:enabled="false"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Quantity and Bill Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quantity &amp; Actions"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <EditText
+                        android:id="@+id/editQuantity"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:hint="Quantity"
+                        android:inputType="number"
+                        android:background="@drawable/edittext_bg"
+                        android:padding="12dp"/>
+
+                    <TextView
+                        android:id="@+id/billTextView"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="KES 0"
+                        android:textStyle="bold"
+                        android:textColor="@color/green"
+                        android:gravity="center"
+                        android:background="@drawable/edittext_bg_disabled"
+                        android:layout_marginStart="8dp"/>
+
+                    <Button
+                        android:id="@+id/addButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:text="ADD"
+                        android:textColor="@color/white"
+                        android:background="@drawable/button_bg"
+                        android:layout_marginStart="8dp"/>
+
+                    <Button
+                        android:id="@+id/deleteButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:text="DEL"
+                        android:textColor="@color/white"
+                        android:backgroundTint="@color/error"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Sales List -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Sales Items"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary"
+                    android:padding="16dp"
+                    android:background="@color/primary_light"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/salesRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Total Bill -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                android:id="@+id/totalBillTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total: KES 0"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary"
+                android:gravity="center"
+                android:padding="16dp"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Payment Mode -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Payment Mode"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/cashCheckBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Cash"/>
+
+                    <CheckBox
+                        android:id="@+id/mpesaCheckBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="M-Pesa"/>
+
+                    <CheckBox
+                        android:id="@+id/toPayCheckBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="To-Pay"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Balance Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Balance Calculation"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <RadioButton
+                        android:id="@+id/balanceRadioButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Partial Payment"/>
+
+                    <EditText
+                        android:id="@+id/editSubmitted"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:hint="Amount Submitted"
+                        android:inputType="numberDecimal"
+                        android:background="@drawable/edittext_bg"
+                        android:padding="12dp"
+                        android:layout_marginStart="8dp"
+                        android:enabled="false"/>
+
+                    <TextView
+                        android:id="@+id/balanceTextView"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="Balance: KES 0"
+                        android:textStyle="bold"
+                        android:textColor="@color/accent"
+                        android:gravity="center"
+                        android:background="@drawable/edittext_bg_disabled"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Submit Button -->
+        <Button
+            android:id="@+id/submitButton"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="SUBMIT SALE"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:background="@drawable/button_bg"
+            android:layout_marginBottom="60dp"/>
+    </LinearLayout>
+</ScrollView>

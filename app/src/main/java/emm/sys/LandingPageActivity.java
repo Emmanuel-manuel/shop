@@ -119,6 +119,17 @@ public class LandingPageActivity extends AppCompatActivity {
                     handleReceiveInventoryNavigation();
                     return true;
 
+                case R.id.issue_goods:
+                    transition();
+                    handleIssueGoodsNavigation();
+                    return true;
+
+                case R.id.sales:
+                    transition();
+                    handleSalesNavigation();
+                    return true;
+
+
                 case R.id.logout:
                     // Handle logout - go to LoginActivity and clear back stack
                     performLogout();
@@ -140,10 +151,6 @@ public class LandingPageActivity extends AppCompatActivity {
                     handleViewTodayInventoryNavigation();
                     return true;
 
-                case R.id.issue_goods:
-                    transition();
-                    handleIssueGoodsNavigation();
-                    return true;
 
                 case R.id.viewIssuedDetails:
                     transition();
@@ -371,7 +378,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
-    // Helper method for View Issued Goods/ inventory navigation
+    // Helper method for Issue Goods Page navigation
     private void handleIssueGoodsNavigation() {
 
         // Clear BottomNavigationView selection
@@ -390,6 +397,27 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
+
+    // Helper method for Sales Page navigation
+    private void handleSalesNavigation() {
+
+        // Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new SalesFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
     // Helper method for View Today's inventory navigation
     private void handleViewIssuedGoodsNavigation() {
 

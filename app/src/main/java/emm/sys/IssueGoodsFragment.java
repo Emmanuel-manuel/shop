@@ -1,5 +1,6 @@
 package emm.sys;
 
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
@@ -221,22 +222,71 @@ public class IssueGoodsFragment extends Fragment {
     }
 
     private void fetchCurrentInventoryBalance(String productName) {
-        // Get the CURRENT balance from inventory table for this product
-        currentBalance = dbHelper.getProductBalance(productName);
-        initialBalance = currentBalance; // Store the initial balance for calculations
+        // For edit mode, we need to use the specific weight and flavour
+        String weight = editWeight;
+        String flavour = editFlavour;
 
-        if (currentBalance >= 0) {
-            // Display the current inventory balance
-            txtProductBal.setText(String.valueOf(currentBalance));
+        if (weight != null && flavour != null) {
+            // Check specific variant first
+            boolean exists = dbHelper.checkSpecificProductExists(productName, weight, flavour);
 
-            // Calculate and display the updated balance based on the original quantity
-            calculateUpdatedBalanceForEdit();
+            if (exists) {
+                Cursor cursor = dbHelper.getSpecificInventoryDetails(productName, weight, flavour);
 
-            enableIssueForm();
+                if (cursor != null && cursor.moveToFirst()) {
+                    try {
+                        currentBalance = cursor.getInt(cursor.getColumnIndexOrThrow("balance"));
+                        initialBalance = currentBalance;
+
+                        // Display the current inventory balance
+                        txtProductBal.setText(String.valueOf(currentBalance));
+
+                        // Calculate and display the updated balance based on the original quantity
+                        calculateUpdatedBalanceForEdit();
+
+                        enableIssueForm();
+
+                    } catch (Exception e) {
+                        currentBalance = 0;
+                        initialBalance = 0;
+                        txtProductBal.setText("0");
+                        txtUpdatedBalance.setText("0");
+                        Toast.makeText(getActivity(), "Error fetching balance for " + productName, Toast.LENGTH_SHORT).show();
+                    } finally {
+                        cursor.close();
+                    }
+                } else {
+                    txtProductBal.setText("0");
+                    txtUpdatedBalance.setText("0");
+                    Toast.makeText(getActivity(),
+                            productName + " of weight " + weight + " and type/flavour " + flavour + " wasn't received today",
+                            Toast.LENGTH_LONG).show();
+                }
+            } else {
+                txtProductBal.setText("0");
+                txtUpdatedBalance.setText("0");
+                Toast.makeText(getActivity(),
+                        productName + " of weight " + weight + " and type/flavour " + flavour + " wasn't received today",
+                        Toast.LENGTH_LONG).show();
+            }
         } else {
-            txtProductBal.setText("0");
-            txtUpdatedBalance.setText("0");
-            Toast.makeText(getActivity(), "No balance found for " + productName, Toast.LENGTH_SHORT).show();
+            // Fallback to original method if weight/flavour not available
+            currentBalance = dbHelper.getProductBalance(productName);
+            initialBalance = currentBalance; // Store the initial balance for calculations
+
+            if (currentBalance >= 0) {
+                // Display the current inventory balance
+                txtProductBal.setText(String.valueOf(currentBalance));
+
+                // Calculate and display the updated balance based on the original quantity
+                calculateUpdatedBalanceForEdit();
+
+                enableIssueForm();
+            } else {
+                txtProductBal.setText("0");
+                txtUpdatedBalance.setText("0");
+                Toast.makeText(getActivity(), "No balance found for " + productName, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -364,6 +414,72 @@ public class IssueGoodsFragment extends Fragment {
                 enableIssueForm(); // Re-enable form for new selection
             }
         });
+
+        // Add Weight Spinner Listener
+        spinnerWeight.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                checkProductVariant();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // Add Flavour Spinner Listener
+        spinnerFlavour.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                checkProductVariant();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+    }
+
+    // Method to check specific product variant
+    private void checkProductVariant() {
+        String productName = txtProductName.getText().toString().trim();
+        String weight = spinnerWeight.getSelectedItem() != null ? spinnerWeight.getSelectedItem().toString() : "";
+        String flavour = spinnerFlavour.getSelectedItem() != null ? spinnerFlavour.getSelectedItem().toString() : "";
+
+        // Skip if any field is not properly selected
+        if (productName.isEmpty() || weight.equals("Select Weight") || flavour.equals("Select Type/Flavour")) {
+            resetBalanceFields();
+            return;
+        }
+
+        // FIXED: Use specific balance method
+        int balance = dbHelper.getSpecificProductBalance(productName, weight, flavour);
+
+        if (balance >= 0) {
+            boolean exists = dbHelper.checkSpecificProductExists(productName, weight, flavour);
+
+            if (exists) {
+                currentBalance = balance;
+                txtProductBal.setText(String.valueOf(currentBalance));
+                txtUpdatedBalance.setText(String.valueOf(currentBalance));
+
+                enableIssueForm();
+
+                Toast.makeText(getActivity(),
+                        "Found: " + productName + " (" + weight + ", " + flavour + ") - Balance: " + balance,
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getActivity(),
+                        productName + " of weight " + weight + " and type/flavour " + flavour + " wasn't received today",
+                        Toast.LENGTH_LONG).show();
+                resetBalanceFields();
+                disableIssueForm();
+            }
+        } else {
+            Toast.makeText(getActivity(),
+                    productName + " of weight " + weight + " and type/flavour " + flavour + " wasn't received today",
+                    Toast.LENGTH_LONG).show();
+            resetBalanceFields();
+            disableIssueForm();
+        }
     }
 
     // Helper method to reset weight spinner to default

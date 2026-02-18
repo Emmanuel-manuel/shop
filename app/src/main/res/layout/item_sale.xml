@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Header Row with Item Number and Bill -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/itemNumberText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="#01"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:background="@drawable/item_number_bg"
+                android:padding="6dp"
+                android:minWidth="32dp"
+                android:gravity="center"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/billText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="KES 0"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/green"
+                android:background="@drawable/price_bg"
+                android:padding="6dp"/>
+        </LinearLayout>
+
+        <!-- Customer Info Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Market"
+                    android:textSize="10sp"
+                    android:textColor="@color/gray"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/marketText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Market Name"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Customer"
+                    android:textSize="10sp"
+                    android:textColor="@color/gray"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/custNameText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Customer Name"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Product Info Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Product"
+                    android:textSize="10sp"
+                    android:textColor="@color/gray"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/productText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Product Name"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Unit Price"
+                    android:textSize="10sp"
+                    android:textColor="@color/gray"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/sellingPriceText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="KES 0"
+                    android:textSize="12sp"
+                    android:textColor="@color/secondary"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quantity"
+                    android:textSize="10sp"
+                    android:textColor="@color/gray"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/quantityText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent"
+                    android:background="@drawable/quantity_bg"
+                    android:padding="4dp"
+                    android:minWidth="24dp"
+                    android:gravity="center"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

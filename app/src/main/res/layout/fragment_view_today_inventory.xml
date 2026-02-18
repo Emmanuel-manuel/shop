@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="2dp"
             app:cardBackgroundColor="@color/surface">
 
             <LinearLayout
@@ -37,7 +37,7 @@
                     android:textSize="22sp"
                     android:textColor="@color/primary"
                     android:gravity="center"
-                    android:layout_marginBottom="8dp"/>
+                    android:layout_marginBottom="6dp"/>
 
                 <TextView
                     android:layout_width="match_parent"
@@ -52,7 +52,7 @@
                     android:layout_height="3dp"
                     android:background="@color/primary"
                     android:layout_gravity="center"
-                    android:layout_marginTop="12dp"/>
+                    android:layout_marginTop="10dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="12dp"
             app:cardElevation="2dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="2dp"
             app:cardBackgroundColor="@color/surface">
 
             <LinearLayout
@@ -165,7 +165,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Stock"
+                        android:text="Today's Stock"
                         android:textSize="13sp"
                         android:textColor="@color/on_secondary_container"
                         android:textStyle="bold"
@@ -179,7 +179,7 @@
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:scrollbars="vertical"
-                    android:padding="8dp"
+                    android:padding="4dp"
                     android:clipToPadding="false"/>
 
                 <!-- Empty State -->
@@ -228,7 +228,8 @@
             android:layout_margin="16dp"
             android:src="@android:drawable/ic_popup_sync"
             app:backgroundTint="@color/primary"
+            app:elevation="8dp"
             app:tint="@color/white"
-            app:elevation="8dp"/>
+            tools:ignore="SpeakableTextPresentCheck" />
     </LinearLayout>
 </FrameLayout>
