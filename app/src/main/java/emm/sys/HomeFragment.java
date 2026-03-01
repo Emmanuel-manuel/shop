@@ -17,6 +17,24 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.PercentFormatter;
+
 import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
@@ -34,10 +52,17 @@ import java.util.Set;
 
 public class HomeFragment extends Fragment implements DatePicker.OnDateChangedListener {
 
+    // Existing variables
     private MaterialButton btnDateFilter;
     private TextView txtTotalInventory, txtTotalIssued, txtRemainingBalance, txtDateRange;
     private TextView txtInventoryNote, txtTopProductsNote, txtDistributionNote;
     private LinearLayout inventoryProgressContainer, topProductsContainer, distributionContainer;
+
+    // Chart variables
+    private PieChart pieChart;
+    private BarChart barChart;
+    private LineChart lineChart;
+    private TextView txtPieChartNote, txtBarChartNote, txtLineChartNote;
 
     private DBHelper dbHelper;
     private String selectedDate = "";
@@ -51,78 +76,6 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
     private Set<String> datesWithData = new HashSet<>();
     private HighlightedDatePickerDialog datePickerDialog;
 
-    private void showDateSelectionDialog() {
-        if (!isAdded() || getActivity() == null) {
-            return;
-        }
-
-        // Get all dates with data
-        new Thread(() -> {
-            if (!isFragmentActive || dbHelper == null) return;
-
-            try {
-                Set<String> dates = dbHelper.getAllDatesWithData();
-                List<String> dateList = new ArrayList<>(dates);
-
-                // Sort dates in descending order (newest first)
-                Collections.sort(dateList, Collections.reverseOrder());
-
-                // Convert to display format
-                final List<String> displayDates = new ArrayList<>();
-                for (String date : dateList) {
-                    try {
-                        Date parsedDate = dbDateFormat.parse(date);
-                        displayDates.add(displayFormat.format(parsedDate));
-                    } catch (Exception e) {
-                        displayDates.add(date);
-                    }
-                }
-
-                // Add "Today" option
-                final List<String> finalDateList = dateList;
-
-                if (handler != null && isFragmentActive) {
-                    handler.post(() -> {
-                        if (!isAdded() || getActivity() == null) return;
-
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                        builder.setTitle("📅 Select Date with Data");
-
-                        // Add "Today" option at the top
-                        final List<String> options = new ArrayList<>();
-                        options.add("📊 Today");
-                        options.addAll(displayDates);
-
-                        builder.setItems(options.toArray(new String[0]), (dialog, which) -> {
-                            if (which == 0) {
-                                // Today selected
-                                loadTodayAnalytics();
-                            } else {
-                                // Other date selected
-                                int dataIndex = which - 1;
-                                if (dataIndex < finalDateList.size()) {
-                                    String selectedDbDate = finalDateList.get(dataIndex);
-                                    String selectedDisplayDate = options.get(which);
-
-                                    selectedDate = selectedDbDate;
-                                    btnDateFilter.setText("📅 " + selectedDisplayDate + " 📊");
-                                    loadAnalyticsByDate(selectedDate);
-                                }
-                            }
-                        });
-
-                        builder.setNegativeButton("Cancel", null);
-
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
-                    });
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -135,6 +88,9 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
             dbHelper = new DBHelper(getActivity());
         }
 
+        // Setup charts
+        setupCharts();
+
         // Load dates with data in background
         loadDatesWithData();
 
@@ -146,6 +102,7 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
     }
 
     private void initializeViews(View view) {
+        // Existing views
         btnDateFilter = view.findViewById(R.id.btnDateFilter);
         txtTotalInventory = view.findViewById(R.id.txtTotalInventory);
         txtTotalIssued = view.findViewById(R.id.txtTotalIssued);
@@ -159,6 +116,122 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
         inventoryProgressContainer = view.findViewById(R.id.inventoryProgressContainer);
         topProductsContainer = view.findViewById(R.id.topProductsContainer);
         distributionContainer = view.findViewById(R.id.distributionContainer);
+
+        // Chart views
+        pieChart = view.findViewById(R.id.pieChart);
+        barChart = view.findViewById(R.id.barChart);
+        lineChart = view.findViewById(R.id.lineChart);
+        txtPieChartNote = view.findViewById(R.id.txtPieChartNote);
+        txtBarChartNote = view.findViewById(R.id.txtBarChartNote);
+        txtLineChartNote = view.findViewById(R.id.txtLineChartNote);
+    }
+
+    private void setupCharts() {
+        setupPieChart();
+        setupBarChart();
+        setupLineChart();
+    }
+
+    private void setupPieChart() {
+        pieChart.setUsePercentValues(true);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setExtraOffsets(5, 10, 5, 5);
+
+        pieChart.setDragDecelerationFrictionCoef(0.95f);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setHoleColor(Color.WHITE);
+        pieChart.setHoleRadius(35f);
+        pieChart.setTransparentCircleRadius(40f);
+
+        pieChart.setDrawCenterText(true);
+        pieChart.setCenterText("Inventory\nDistribution");
+        pieChart.setCenterTextSize(12f);
+        pieChart.setCenterTextColor(Color.parseColor("#2196F3"));
+
+        pieChart.setRotationAngle(0);
+        pieChart.setRotationEnabled(true);
+        pieChart.setHighlightPerTapEnabled(true);
+
+        Legend legend = pieChart.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setDrawInside(false);
+        legend.setXEntrySpace(7f);
+        legend.setYEntrySpace(0f);
+        legend.setTextSize(10f);
+    }
+
+    private void setupBarChart() {
+        barChart.getDescription().setEnabled(false);
+        barChart.setDrawBarShadow(false);
+        barChart.setDrawValueAboveBar(true);
+        barChart.setMaxVisibleValueCount(60);
+        barChart.setPinchZoom(false);
+        barChart.setDrawGridBackground(false);
+
+        XAxis xAxis = barChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setGranularity(1f);
+        xAxis.setTextSize(10f);
+        xAxis.setTextColor(Color.parseColor("#757575"));
+
+        YAxis leftAxis = barChart.getAxisLeft();
+        leftAxis.setLabelCount(8, false);
+        leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
+        leftAxis.setSpaceTop(15f);
+        leftAxis.setAxisMinimum(0f);
+        leftAxis.setTextSize(10f);
+        leftAxis.setTextColor(Color.parseColor("#757575"));
+
+        YAxis rightAxis = barChart.getAxisRight();
+        rightAxis.setDrawGridLines(false);
+        rightAxis.setLabelCount(8, false);
+        rightAxis.setSpaceTop(15f);
+        rightAxis.setAxisMinimum(0f);
+        rightAxis.setTextSize(10f);
+        rightAxis.setTextColor(Color.parseColor("#757575"));
+
+        Legend legend = barChart.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setDrawInside(false);
+        legend.setFormSize(8f);
+        legend.setTextSize(10f);
+        legend.setXEntrySpace(4f);
+    }
+
+    private void setupLineChart() {
+        lineChart.getDescription().setEnabled(false);
+        lineChart.setDrawGridBackground(false);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setPinchZoom(true);
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setGranularity(1f);
+        xAxis.setTextSize(10f);
+        xAxis.setTextColor(Color.parseColor("#757575"));
+
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setAxisMinimum(0f);
+        leftAxis.setTextSize(10f);
+        leftAxis.setTextColor(Color.parseColor("#757575"));
+
+        YAxis rightAxis = lineChart.getAxisRight();
+        rightAxis.setEnabled(false);
+
+        Legend legend = lineChart.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setDrawInside(false);
+        legend.setTextSize(10f);
     }
 
     private void loadDatesWithData() {
@@ -167,11 +240,6 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
 
             try {
                 datesWithData = dbHelper.getAllDatesWithData();
-
-                // Log for debugging
-                if (!datesWithData.isEmpty()) {
-                    System.out.println("Dates with data: " + datesWithData.size());
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -221,12 +289,11 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
     }
 
     private void updateButtonForSelectedDate(String displayDate, String dbDate) {
-        // Check if the selected date has data
         boolean hasData = datesWithData.contains(dbDate);
 
         if (hasData) {
             btnDateFilter.setText("📅 " + displayDate + " 📊");
-            btnDateFilter.setBackgroundColor(Color.parseColor("#E8F5E9")); // Light green
+            btnDateFilter.setBackgroundColor(Color.parseColor("#E8F5E9"));
         } else {
             btnDateFilter.setText("📅 " + displayDate);
             btnDateFilter.setBackgroundColor(Color.TRANSPARENT);
@@ -235,21 +302,16 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
 
     private void customizeDatePickerDialog() {
         try {
-            // Set dialog title
             datePickerDialog.setTitle("📅 Select Date with Data");
-
-            // Customize positive button
             datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE).setText("Select");
             datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE).setText("Cancel");
 
-            // Add info text about highlighted dates
             TextView infoText = new TextView(getActivity());
             infoText.setText("• Green dates have data\n• Today's date is auto-selected");
             infoText.setTextSize(12);
             infoText.setTextColor(Color.parseColor("#757575"));
             infoText.setPadding(24, 16, 24, 8);
 
-            // Get the dialog's main layout and add info text
             ViewGroup dialogLayout = (ViewGroup) datePickerDialog.findViewById(android.R.id.content);
             if (dialogLayout != null && dialogLayout.getChildAt(0) instanceof ViewGroup) {
                 ViewGroup contentLayout = (ViewGroup) dialogLayout.getChildAt(0);
@@ -262,7 +324,6 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
 
     @Override
     public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-        // Update highlighted days when month changes
         updateHighlightedDays(year, monthOfYear);
     }
 
@@ -273,7 +334,6 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
             try {
                 Set<Integer> highlightedDays = dbHelper.getHighlightedDaysForMonth(year, month);
 
-                // Update UI on main thread
                 if (handler != null && isFragmentActive) {
                     handler.post(() -> {
                         if (datePickerDialog != null) {
@@ -287,12 +347,74 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
         }).start();
     }
 
+    private void showDateSelectionDialog() {
+        if (!isAdded() || getActivity() == null) {
+            return;
+        }
+
+        new Thread(() -> {
+            if (!isFragmentActive || dbHelper == null) return;
+
+            try {
+                Set<String> dates = dbHelper.getAllDatesWithData();
+                List<String> dateList = new ArrayList<>(dates);
+                Collections.sort(dateList, Collections.reverseOrder());
+
+                final List<String> displayDates = new ArrayList<>();
+                for (String date : dateList) {
+                    try {
+                        Date parsedDate = dbDateFormat.parse(date);
+                        displayDates.add(displayFormat.format(parsedDate));
+                    } catch (Exception e) {
+                        displayDates.add(date);
+                    }
+                }
+
+                final List<String> finalDateList = dateList;
+
+                if (handler != null && isFragmentActive) {
+                    handler.post(() -> {
+                        if (!isAdded() || getActivity() == null) return;
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setTitle("📅 Select Date with Data");
+
+                        final List<String> options = new ArrayList<>();
+                        options.add("📊 Today");
+                        options.addAll(displayDates);
+
+                        builder.setItems(options.toArray(new String[0]), (dialog, which) -> {
+                            if (which == 0) {
+                                loadTodayAnalytics();
+                            } else {
+                                int dataIndex = which - 1;
+                                if (dataIndex < finalDateList.size()) {
+                                    String selectedDbDate = finalDateList.get(dataIndex);
+                                    String selectedDisplayDate = options.get(which);
+
+                                    selectedDate = selectedDbDate;
+                                    btnDateFilter.setText("📅 " + selectedDisplayDate + " 📊");
+                                    loadAnalyticsByDate(selectedDate);
+                                }
+                            }
+                        });
+
+                        builder.setNegativeButton("Cancel", null);
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     private void loadTodayAnalytics() {
         selectedDate = "";
         String todayDate = dbDateFormat.format(new Date());
         String displayDate = "Today";
 
-        // Check if today has data
         boolean todayHasData = datesWithData.contains(todayDate);
         if (todayHasData) {
             btnDateFilter.setText("📅 " + displayDate + " 📊");
@@ -355,24 +477,36 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
                             return;
                         }
 
+                        // Update existing views
                         txtTotalInventory.setText(String.valueOf(finalTotalInventory));
                         txtTotalIssued.setText(String.valueOf(finalTotalIssued));
                         txtRemainingBalance.setText(String.valueOf(finalRemainingBalance));
 
-                        // Update date range text with data indicator
                         String dateText = displayDate + " Analytics";
                         if (!finalInventoryMap.isEmpty() || !finalIssuedMap.isEmpty()) {
                             dateText += " 📊";
                         }
                         txtDateRange.setText(dateText);
 
+                        // Update charts
+                        updatePieChart(finalInventoryMap);
+                        updateBarChart(finalInventoryMap, finalIssuedMap);
+                        updateLineChart(date);
+
+                        // Update existing progress bars and views
                         updateInventoryProgress(finalInventoryMap, finalIssuedMap, finalMaxInventory);
                         updateTopProducts(finalTopProducts);
                         updateDistributionView(finalInventoryMap, finalIssuedMap);
 
+                        // Update notes
                         txtInventoryNote.setText(finalInventoryMap.size() + " products in inventory");
                         txtTopProductsNote.setText("Top " + Math.min(5, finalTopProducts.size()) + " issued products");
                         txtDistributionNote.setText("Comparing " + finalInventoryMap.size() + " products");
+
+                        // Update chart notes
+                        txtPieChartNote.setText("Distribution of " + finalInventoryMap.size() + " products");
+                        txtBarChartNote.setText("Inventory vs Issued - " + finalInventoryMap.size() + " products");
+                        txtLineChartNote.setText("7-day trend for " + displayDate);
 
                         if (finalInventoryMap.isEmpty() && finalIssuedMap.isEmpty()) {
                             Toast.makeText(getActivity(),
@@ -393,6 +527,176 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
         }).start();
     }
 
+    // Chart update methods
+    private void updatePieChart(Map<String, Integer> inventoryMap) {
+        List<PieEntry> entries = new ArrayList<>();
+        List<Integer> colors = new ArrayList<>();
+
+        if (inventoryMap.isEmpty()) {
+            entries.add(new PieEntry(100f, "No Data"));
+            colors.add(Color.parseColor("#CCCCCC"));
+        } else {
+            List<Map.Entry<String, Integer>> sortedProducts = new ArrayList<>(inventoryMap.entrySet());
+            Collections.sort(sortedProducts, (a, b) -> b.getValue().compareTo(a.getValue()));
+
+            int otherQuantity = 0;
+            int count = 0;
+
+            for (Map.Entry<String, Integer> entry : sortedProducts) {
+                if (count < 7) {
+                    entries.add(new PieEntry(entry.getValue(), entry.getKey()));
+                    colors.add(getChartColor(count));
+                } else {
+                    otherQuantity += entry.getValue();
+                }
+                count++;
+            }
+
+            if (otherQuantity > 0) {
+                entries.add(new PieEntry(otherQuantity, "Others"));
+                colors.add(Color.parseColor("#757575"));
+            }
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+        dataSet.setColors(colors);
+        dataSet.setSliceSpace(2f);
+        dataSet.setSelectionShift(5f);
+        dataSet.setValueTextSize(10f);
+        dataSet.setValueTextColor(Color.WHITE);
+
+        PieData data = new PieData(dataSet);
+        data.setValueFormatter(new PercentFormatter());
+
+        pieChart.setData(data);
+        pieChart.animateY(1000);
+        pieChart.invalidate();
+    }
+
+    private void updateBarChart(Map<String, Integer> inventoryMap, Map<String, Integer> issuedMap) {
+        List<BarEntry> inventoryEntries = new ArrayList<>();
+        List<BarEntry> issuedEntries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+
+        if (inventoryMap.isEmpty() && issuedMap.isEmpty()) {
+            inventoryEntries.add(new BarEntry(0, 0));
+            issuedEntries.add(new BarEntry(0, 0));
+            labels.add("No Data");
+        } else {
+            Set<String> allProducts = new HashSet<>();
+            allProducts.addAll(inventoryMap.keySet());
+            allProducts.addAll(issuedMap.keySet());
+
+            List<String> productList = new ArrayList<>(allProducts);
+            Collections.sort(productList);
+
+            int maxProducts = Math.min(10, productList.size());
+            for (int i = 0; i < maxProducts; i++) {
+                String product = productList.get(i);
+                int inventoryQty = inventoryMap.containsKey(product) ? inventoryMap.get(product) : 0;
+                int issuedQty = issuedMap.containsKey(product) ? issuedMap.get(product) : 0;
+
+                inventoryEntries.add(new BarEntry(i, inventoryQty));
+                issuedEntries.add(new BarEntry(i, issuedQty));
+
+                String displayName = product.length() > 8 ? product.substring(0, 8) + "..." : product;
+                labels.add(displayName);
+            }
+        }
+
+        BarDataSet inventoryDataSet = new BarDataSet(inventoryEntries, "Inventory");
+        inventoryDataSet.setColor(Color.parseColor("#2196F3"));
+        inventoryDataSet.setValueTextSize(8f);
+
+        BarDataSet issuedDataSet = new BarDataSet(issuedEntries, "Issued");
+        issuedDataSet.setColor(Color.parseColor("#4CAF50"));
+        issuedDataSet.setValueTextSize(8f);
+
+        BarData data = new BarData(inventoryDataSet, issuedDataSet);
+        data.setBarWidth(0.35f);
+
+        barChart.setData(data);
+        barChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));
+        barChart.groupBars(0f, 0.3f, 0.05f);
+
+        barChart.animateY(1000);
+        barChart.invalidate();
+    }
+
+    private void updateLineChart(String currentDate) {
+        List<Entry> inventoryEntries = new ArrayList<>();
+        List<Entry> issuedEntries = new ArrayList<>();
+        List<String> dateLabels = new ArrayList<>();
+
+        try {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(dbDateFormat.parse(currentDate));
+
+            for (int i = 6; i >= 0; i--) {
+                Calendar tempCal = (Calendar) cal.clone();
+                tempCal.add(Calendar.DAY_OF_MONTH, -i);
+
+                String dateStr = dbDateFormat.format(tempCal.getTime());
+                String labelStr = new SimpleDateFormat("dd/MM", Locale.getDefault()).format(tempCal.getTime());
+
+                Map<String, Integer> dayInventory = getInventoryByDate(dateStr);
+                Map<String, Integer> dayIssued = getIssuedGoodsByDate(dateStr);
+
+                int totalInv = 0;
+                int totalIss = 0;
+
+                for (int val : dayInventory.values()) totalInv += val;
+                for (int val : dayIssued.values()) totalIss += val;
+
+                inventoryEntries.add(new Entry(6-i, totalInv));
+                issuedEntries.add(new Entry(6-i, totalIss));
+                dateLabels.add(labelStr);
+            }
+        } catch (Exception e) {
+            for (int i = 0; i < 7; i++) {
+                inventoryEntries.add(new Entry(i, 0));
+                issuedEntries.add(new Entry(i, 0));
+                dateLabels.add("Day " + (i+1));
+            }
+        }
+
+        LineDataSet inventoryDataSet = new LineDataSet(inventoryEntries, "Inventory");
+        inventoryDataSet.setColor(Color.parseColor("#2196F3"));
+        inventoryDataSet.setCircleColor(Color.parseColor("#2196F3"));
+        inventoryDataSet.setLineWidth(2f);
+        inventoryDataSet.setCircleRadius(4f);
+        inventoryDataSet.setValueTextSize(8f);
+
+        LineDataSet issuedDataSet = new LineDataSet(issuedEntries, "Issued");
+        issuedDataSet.setColor(Color.parseColor("#4CAF50"));
+        issuedDataSet.setCircleColor(Color.parseColor("#4CAF50"));
+        issuedDataSet.setLineWidth(2f);
+        issuedDataSet.setCircleRadius(4f);
+        issuedDataSet.setValueTextSize(8f);
+
+        LineData data = new LineData(inventoryDataSet, issuedDataSet);
+
+        lineChart.setData(data);
+        lineChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(dateLabels));
+        lineChart.animateX(1000);
+        lineChart.invalidate();
+    }
+
+    private int getChartColor(int index) {
+        int[] chartColors = {
+                Color.parseColor("#2196F3"),
+                Color.parseColor("#4CAF50"),
+                Color.parseColor("#FF9800"),
+                Color.parseColor("#9C27B0"),
+                Color.parseColor("#F44336"),
+                Color.parseColor("#00BCD4"),
+                Color.parseColor("#8BC34A"),
+                Color.parseColor("#FF5722")
+        };
+        return chartColors[index % chartColors.length];
+    }
+
+    // Database query methods
     private Map<String, Integer> getInventoryByDate(String date) {
         Map<String, Integer> inventoryMap = new HashMap<>();
 
@@ -481,13 +785,7 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
         android.view.LayoutInflater inflater = android.view.LayoutInflater.from(getActivity());
 
         List<Map.Entry<String, Integer>> sortedProducts = new ArrayList<>(inventoryMap.entrySet());
-
-        Collections.sort(sortedProducts, new Comparator<Map.Entry<String, Integer>>() {
-            @Override
-            public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
-                return b.getValue().compareTo(a.getValue());
-            }
-        });
+        Collections.sort(sortedProducts, (a, b) -> b.getValue().compareTo(a.getValue()));
 
         for (Map.Entry<String, Integer> entry : sortedProducts) {
             String productName = entry.getKey();
@@ -504,7 +802,6 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
             String displayName = productName.length() > 20 ?
                     productName.substring(0, 20) + "..." : productName;
             txtProductName.setText(displayName);
-
             txtProductValue.setText(String.valueOf(inventoryQty));
             txtIssued.setText("Issued: " + issuedQty);
 
@@ -615,14 +912,9 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
             }
         }
 
-        Collections.sort(uniqueProducts, new Comparator<String>() {
-            @Override
-            public int compare(String a, String b) {
-                int invA = getInventoryQuantity(inventoryMap, a);
-                int invB = getInventoryQuantity(inventoryMap, b);
-                return Integer.compare(invB, invA);
-            }
-        });
+        Collections.sort(uniqueProducts, (a, b) ->
+                Integer.compare(getInventoryQuantity(inventoryMap, b),
+                        getInventoryQuantity(inventoryMap, a)));
 
         for (String product : uniqueProducts) {
             int inventoryQty = getInventoryQuantity(inventoryMap, product);
@@ -681,7 +973,6 @@ public class HomeFragment extends Fragment implements DatePicker.OnDateChangedLi
             handler.removeCallbacksAndMessages(null);
         }
 
-        // Dismiss date picker if shown
         if (datePickerDialog != null && datePickerDialog.isShowing()) {
             datePickerDialog.dismiss();
         }

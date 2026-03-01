@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="2dp"
+    app:cardCornerRadius="4dp"
+    app:cardElevation="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <!-- Main Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtNumber"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:text="#1"
+                android:textSize="11sp"
+                android:textColor="@color/secondary" />
+
+            <TextView
+                android:id="@+id/txtCustomer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.5"
+                android:text="Customer"
+                android:textSize="11sp"
+                android:textColor="@color/black"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/txtMarket"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.5"
+                android:text="Market"
+                android:textSize="11sp"
+                android:textColor="@color/black"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/txtProduct"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.5"
+                android:text="Product"
+                android:textSize="11sp"
+                android:textColor="@color/black"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/txtQuantity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Qty"
+                android:textSize="11sp"
+                android:textColor="@color/black"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/txtAmount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.5"
+                android:text="0"
+                android:textSize="11sp"
+                android:textColor="@color/primary"
+                android:textStyle="bold"
+                android:gravity="end"
+                android:layout_marginEnd="4dp" />
+
+            <TextView
+                android:id="@+id/txtStatus"
+                android:layout_width="0dp"
+                android:layout_height="24dp"
+                android:layout_weight="1"
+                android:text="Paid"
+                android:textSize="9sp"
+                android:textColor="@color/white"
+                android:gravity="center"
+                android:paddingHorizontal="2dp"
+                android:background="@color/green"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <!-- Second Row with timestamp and payment mode -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:id="@+id/txtTimestamp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="12:30"
+                android:textSize="9sp"
+                android:textColor="@color/secondary" />
+
+            <TextView
+                android:id="@+id/txtPaymentMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💵"
+                android:textSize="12sp"
+                android:layout_marginEnd="4dp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -157,8 +157,14 @@ public class LandingPageActivity extends AppCompatActivity {
                     handleViewIssuedGoodsNavigation();
                     return true;
 
+                case R.id.viewSalesDetails:
+                    transition();
+                    handleViewSalesDetailsNavigation();
+                    return true;
+
                 case R.id.to_pay:
-                    // Handle to pay
+                    transition();
+                    handleToPayDetailsNavigation();
                     return true;
 
                 case R.id.email:
@@ -418,7 +424,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 .commit();
     }
 
-    // Helper method for View Today's inventory navigation
+    // Helper method for View Today's Issued Goods navigation
     private void handleViewIssuedGoodsNavigation() {
 
         // Clear BottomNavigationView selection
@@ -437,6 +443,47 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
+
+    // Helper method for View To Pay navigation
+    private void handleToPayDetailsNavigation() {
+
+        // Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new ToPayFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    // Helper method for View Sales Issued Goods navigation
+    private void handleViewSalesDetailsNavigation() {
+
+        // Clear BottomNavigationView selection
+        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
+        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
+        bottomNavView.setSelectedItemId(0); // Clear selection
+
+        // Show ReceiveInventoryFragment
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new ViewSalesFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
     // method for smooth transition
     private void transition(){
         getSupportFragmentManager().beginTransaction()

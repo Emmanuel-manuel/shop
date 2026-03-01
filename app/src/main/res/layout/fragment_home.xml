@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="6dp">
 
         <!-- Header Card -->
         <androidx.cardview.widget.CardView
@@ -17,14 +17,14 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="6dp"
             app:cardBackgroundColor="@color/surface">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="8dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -75,7 +75,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="6dp">
 
             <androidx.cardview.widget.CardView
                 android:layout_width="0dp"
@@ -181,6 +181,129 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
+
+        <!-- NEW: Pie Chart Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🥧 Inventory Distribution"
+                    android:textSize="16sp"
+                    android:textColor="@color/on_surface"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.github.mikephil.charting.charts.PieChart
+                    android:id="@+id/pieChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"/>
+
+                <TextView
+                    android:id="@+id/txtPieChartNote"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Product distribution by quantity"
+                    android:textSize="11sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- NEW: Bar Chart Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📊 Inventory vs Issued Comparison"
+                    android:textSize="16sp"
+                    android:textColor="@color/on_surface"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.github.mikephil.charting.charts.BarChart
+                    android:id="@+id/barChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"/>
+
+                <TextView
+                    android:id="@+id/txtBarChartNote"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Inventory vs issued goods comparison"
+                    android:textSize="11sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- NEW: Line Chart Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/surface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📈 Daily Trend Analysis"
+                    android:textSize="16sp"
+                    android:textColor="@color/on_surface"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/lineChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"/>
+
+                <TextView
+                    android:id="@+id/txtLineChartNote"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="7-day trend analysis"
+                    android:textSize="11sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:gravity="center"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- Inventory Progress Card -->
         <androidx.cardview.widget.CardView

@@ -47,6 +47,10 @@
                     android:icon="@drawable/ic_baseline_transcript_24"
                     android:title="View Issued Goods"
                     />
+                <item android:id="@+id/viewSalesDetails"
+                    android:icon="@drawable/ic_baseline_point_of_sale_24"
+                    android:title="View Sales"
+                    />
                 <item android:id="@+id/to_pay"
                     android:icon="@drawable/ic_baseline_fees_24"
                     android:title="To Pay"
