@@ -100,84 +100,57 @@ public class LandingPageActivity extends AppCompatActivity {
             int id = item.getItemId();
             drawerLayout.closeDrawer(GravityCompat.START); // Close drawer after selection
 
-            switch (id) {
-                case R.id.home:
-                    // Navigate to HomeFragment
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.fragmentContainer, new HomeFragment())
-                            .commit();
-                    return true;
-
-
-                case R.id.add_products:
-                    // Navigate to ReceiveInventoryFragment
-                    handleAddProductDetailsNavigation();
-                    return true;
-
-                case R.id.receive_inventory:
-                    // Navigate to ReceiveInventoryFragment
-                    handleReceiveInventoryNavigation();
-                    return true;
-
-                case R.id.issue_goods:
-                    transition();
-                    handleIssueGoodsNavigation();
-                    return true;
-
-                case R.id.sales:
-                    transition();
-                    handleSalesNavigation();
-                    return true;
-
-
-                case R.id.logout:
-                    // Handle logout - go to LoginActivity and clear back stack
-                    performLogout();
-                    return true;
-
-                // Add other cases for additional menu items
-                case R.id.settings:
-                    // Handle settings
-                    return true;
-
-
-                case R.id.productDetails:
-                    // Handle View Today's inventory details
-                    handleViewProductDetailsNavigation();
-                    return true;
-
-                case R.id.inventoryDetails:
-                    // Handle View Today's inventory details
-                    handleViewTodayInventoryNavigation();
-                    return true;
-
-
-                case R.id.viewIssuedDetails:
-                    transition();
-                    handleViewIssuedGoodsNavigation();
-                    return true;
-
-                case R.id.viewSalesDetails:
-                    transition();
-                    handleViewSalesDetailsNavigation();
-                    return true;
-
-                case R.id.to_pay:
-                    transition();
-                    handleToPayDetailsNavigation();
-                    return true;
-
-                case R.id.email:
-                    // Handle email
-                    return true;
-
-                case R.id.contact:
-                    // Handle contact
-                    return true;
-
-                default:
-                    return false;
+            if (id == R.id.home) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragmentContainer, new HomeFragment())
+                        .commit();
+                return true;
+            } else if (id == R.id.add_products) {
+                handleAddProductDetailsNavigation();
+                return true;
+            } else if (id == R.id.receive_inventory) {
+                handleReceiveInventoryNavigation();
+                return true;
+            } else if (id == R.id.issue_goods) {
+                transition();
+                handleIssueGoodsNavigation();
+                return true;
+            } else if (id == R.id.sales) {
+                transition();
+                handleSalesNavigation();
+                return true;
+            } else if (id == R.id.notepad) {
+                handleNotepadNavigation();
+                return true;
+            } else if (id == R.id.logout) {
+                performLogout();
+                return true;
+            } else if (id == R.id.settings) {
+                return true;
+            } else if (id == R.id.productDetails) {
+                handleViewProductDetailsNavigation();
+                return true;
+            } else if (id == R.id.inventoryDetails) {
+                handleViewTodayInventoryNavigation();
+                return true;
+            } else if (id == R.id.viewIssuedDetails) {
+                transition();
+                handleViewIssuedGoodsNavigation();
+                return true;
+            } else if (id == R.id.viewSalesDetails) {
+                transition();
+                handleViewSalesDetailsNavigation();
+                return true;
+            } else if (id == R.id.to_pay) {
+                transition();
+                handleToPayDetailsNavigation();
+                return true;
+            } else if (id == R.id.email) {
+                return true;
+            } else if (id == R.id.contact) {
+                return true;
             }
+            return false;
         });
 
         // ............. Working with Fragments of Bottom Navigation Buttons ..............
@@ -308,14 +281,20 @@ public class LandingPageActivity extends AppCompatActivity {
     }
 
     // .............. HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ..........
+    // ── Navigation helpers ────────────────────────────────────────────────────
+
+    /** Clears the BottomNavigationView highlighted selection */
+    private void clearBottomNavSelection() {
+        bottomNavView.getMenu().setGroupCheckable(0, false, true);
+        bottomNavView.getMenu().setGroupCheckable(0, true, true);
+        bottomNavView.setSelectedItemId(0);
+    }
+
     // Helper method for Receive inventory navigation
     void handleAddProductDetailsNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -331,10 +310,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleReceiveInventoryNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -350,10 +326,7 @@ public class LandingPageActivity extends AppCompatActivity {
     public void handleViewProductDetailsNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -369,10 +342,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleViewTodayInventoryNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -388,10 +358,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleIssueGoodsNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -408,10 +375,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleSalesNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -428,10 +392,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleViewIssuedGoodsNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -448,10 +409,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleToPayDetailsNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -468,10 +426,7 @@ public class LandingPageActivity extends AppCompatActivity {
     private void handleViewSalesDetailsNavigation() {
 
         // Clear BottomNavigationView selection
-        bottomNavView.getMenu().setGroupCheckable(0, false, true); // Temporarily disable checking
-        bottomNavView.getMenu().setGroupCheckable(0, true, true); // Re-enable checking
-        bottomNavView.setSelectedItemId(0); // Clear selection
-
+        clearBottomNavSelection();
         // Show ReceiveInventoryFragment
         getSupportFragmentManager().beginTransaction()
                 .setCustomAnimations(
@@ -483,6 +438,19 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
+
+    // ── Helper method for Notepad navigation ───────────────────────────────────────────────
+    public void handleNotepadNavigation() {
+        clearBottomNavSelection();
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter, R.anim.fragment_exit,
+                        R.anim.fragment_enter, R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new NotepadFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
 
     // method for smooth transition
     private void transition(){

@@ -25,6 +25,12 @@
             android:title="Sales Page"
             />
 
+        <!-- ── Notepad ── -->
+        <item android:id="@+id/notepad"
+            android:icon="@drawable/ic_baseline_note_24"
+            android:title="Notepad"
+            />
+
 
         <item android:id="@+id/settings"
             android:icon="@drawable/ic_baseline_settings_24"

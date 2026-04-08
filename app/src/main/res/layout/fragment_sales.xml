@@ -246,11 +246,11 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Sales Items"
-                    android:textStyle="bold"
-                    android:textColor="@color/secondary"
+                    android:background="@color/primary_light"
                     android:padding="16dp"
-                    android:background="@color/primary_light"/>
+                    android:text="Sales Items"
+                    android:textColor="#388E3C"
+                    android:textStyle="bold" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/salesRecyclerView"

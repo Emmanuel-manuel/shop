@@ -24,7 +24,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
 
-        super(context, "Shop.db", null, 9);
+        super(context, "Shop.db", null, 10);
     }
 
     @Override
@@ -93,6 +93,15 @@ public class DBHelper extends SQLiteOpenHelper {
                 "total_bill INTEGER," +
                 "balance INTEGER," +
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+
+        // Create notes table
+        db.execSQL("CREATE TABLE notes(" +
+                           "id        INTEGER PRIMARY KEY AUTOINCREMENT," +
+                           "title     TEXT," +
+                           "content   TEXT," +
+                           "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+
+
     }
 
 
@@ -177,6 +186,14 @@ public class DBHelper extends SQLiteOpenHelper {
                     "balance INTEGER," +
                     "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
         }
+
+        if (oldVersion < 10) {
+                   db.execSQL("CREATE TABLE IF NOT EXISTS notes(" +
+                           "id        INTEGER PRIMARY KEY AUTOINCREMENT," +
+                           "title     TEXT," +
+                           "content   TEXT," +
+                           "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+               }
 
     }
 
@@ -1101,10 +1118,222 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return price;
     }
+// =========== ENHANCED SALES ANALYTICS METHODS ===========
+
+    // Get today's total sales revenue
+    public int getTodayTotalRevenue() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int revenue = 0;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COALESCE(SUM(total_bill), 0) FROM sales WHERE date(timestamp) = ?",
+                new String[]{todayDate}
+        );
+
+        if (cursor.moveToFirst()) {
+            revenue = cursor.getInt(0);
+        }
+        cursor.close();
+        return revenue;
+    }
+
+    // Get today's total transactions count
+    public int getTodayTransactionCount() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int count = 0;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COUNT(*) FROM sales WHERE date(timestamp) = ?",
+                new String[]{todayDate}
+        );
+
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
+    }
+
+    // Get top customers by purchase amount
+    public List<String> getTopCustomers(int limit) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> customers = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT cust_name, SUM(total_bill) as total FROM sales " +
+                        "GROUP BY cust_name ORDER BY total DESC LIMIT ?",
+                new String[]{String.valueOf(limit)}
+        );
+
+        while (cursor.moveToNext()) {
+            String customer = cursor.getString(0);
+            int total = cursor.getInt(1);
+            customers.add(customer + " (KES " + total + ")");
+        }
+        cursor.close();
+        return customers;
+    }
+
+    // Get recent customers for quick selection
+    public List<String> getRecentCustomers(int limit) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> customers = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT cust_name FROM sales " +
+                        "ORDER BY timestamp DESC LIMIT ?",
+                new String[]{String.valueOf(limit)}
+        );
+
+        while (cursor.moveToNext()) {
+            customers.add(cursor.getString(0));
+        }
+        cursor.close();
+        return customers;
+    }
+
+    // Get customer purchase history
+    public Cursor getCustomerHistory(String customerName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT product_name, quantity, total_bill, timestamp FROM sales " +
+                        "WHERE cust_name = ? ORDER BY timestamp DESC LIMIT 10",
+                new String[]{customerName}
+        );
+    }
+
+    // Calculate today's profit (requires product_details join)
+    public int getTodayProfit() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int profit = 0;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        Cursor cursor = db.rawQuery(
+                "SELECT SUM((s.selling_price - p.buying_price) * s.quantity) as profit " +
+                        "FROM sales s JOIN product_details p ON s.product_name = p.product_name " +
+                        "WHERE date(s.timestamp) = ?",
+                new String[]{todayDate}
+        );
+
+        if (cursor.moveToFirst() && !cursor.isNull(0)) {
+            profit = cursor.getInt(0);
+        }
+        cursor.close();
+        return profit;
+    }
+
+    // Generate transaction reference number
+    public String generateTransactionRef() {
+        SimpleDateFormat format = new SimpleDateFormat("yyMMddHHmm", Locale.getDefault());
+        String timestamp = format.format(new Date());
+        return "TXN" + timestamp + String.format("%03d", (int)(Math.random() * 1000));
+    }
+
+    // Check low stock products
+    public List<String> getLowStockProducts(int threshold) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> lowStockProducts = new ArrayList<>();
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT product_name, balance FROM inventory " +
+                        "WHERE date(timestamp) = ? AND balance <= ? AND balance > 0",
+                new String[]{todayDate, String.valueOf(threshold)}
+        );
+
+        while (cursor.moveToNext()) {
+            String product = cursor.getString(0);
+            int balance = cursor.getInt(1);
+            lowStockProducts.add(product + " (" + balance + " left)");
+        }
+        cursor.close();
+        return lowStockProducts;
+    }
 
 
 
+// ============ NOTEPAD AND NOTES METHODS ==========
+// ============ Insert a new note ============
+public boolean insertNote(String title, String content) {
+    SQLiteDatabase db = this.getWritableDatabase();
+    ContentValues values = new ContentValues();
+    values.put("title",   title);
+    values.put("content", content);
+    long result = db.insert("notes", null, values);
+    return result != -1;
+}
 
+    // ============ Update an existing note ============
+    public boolean updateNote(int id, String title, String content) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("title",   title);
+        values.put("content", content);
+        // Update timestamp to now
+        values.put("timestamp",
+                new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
+                        java.util.Locale.getDefault())
+                        .format(new java.util.Date()));
+        int rows = db.update("notes", values, "id = ?",
+                new String[]{String.valueOf(id)});
+        return rows > 0;
+    }
+
+    // ============ Delete a note ============
+    public boolean deleteNote(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int rows = db.delete("notes", "id = ?", new String[]{String.valueOf(id)});
+        return rows > 0;
+    }
+
+    // ============ Get all notes (newest first) ============
+    public List<Note> getAllNotes() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Note> notes = new ArrayList<>();
+        Cursor cursor = db.rawQuery(
+                "SELECT id, title, content, timestamp FROM notes ORDER BY timestamp DESC",
+                null);
+        while (cursor.moveToNext()) {
+            notes.add(new Note(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getString(3)));
+        }
+        cursor.close();
+        return notes;
+    }
+
+    // ============ Search notes by title or content ============
+    public List<Note> searchNotes(String query) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Note> notes = new ArrayList<>();
+        String like = "%" + query + "%";
+        Cursor cursor = db.rawQuery(
+                "SELECT id, title, content, timestamp FROM notes " +
+                        "WHERE title LIKE ? OR content LIKE ? " +
+                        "ORDER BY timestamp DESC",
+                new String[]{like, like});
+        while (cursor.moveToNext()) {
+            notes.add(new Note(
+                    cursor.getInt(0),
+                    cursor.getString(1),
+                    cursor.getString(2),
+                    cursor.getString(3)));
+        }
+        cursor.close();
+        return notes;
+    }
 
 
 
