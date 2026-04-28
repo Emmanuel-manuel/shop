@@ -99,7 +99,7 @@ public class DBHelper extends SQLiteOpenHelper {
                            "id        INTEGER PRIMARY KEY AUTOINCREMENT," +
                            "title     TEXT," +
                            "content   TEXT," +
-                           "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                           "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");  // Changed to localtime
 
 
     }
@@ -192,7 +192,7 @@ public class DBHelper extends SQLiteOpenHelper {
                            "id        INTEGER PRIMARY KEY AUTOINCREMENT," +
                            "title     TEXT," +
                            "content   TEXT," +
-                           "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                           "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");  // Changed to localtime
                }
 
     }
@@ -1269,6 +1269,14 @@ public boolean insertNote(String title, String content) {
     ContentValues values = new ContentValues();
     values.put("title",   title);
     values.put("content", content);
+
+    // Manually set the timestamp to local time instead of relying on DEFAULT
+    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+            "yyyy-MM-dd HH:mm:ss",
+            java.util.Locale.getDefault());
+    String localTime = sdf.format(new java.util.Date());
+    values.put("timestamp", localTime);
+
     long result = db.insert("notes", null, values);
     return result != -1;
 }
