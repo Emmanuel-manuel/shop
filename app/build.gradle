@@ -23,6 +23,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -44,6 +53,14 @@ dependencies {
 
     // NanoHTTPD — lightweight HTTP server for device-to-device transfer
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
+
+    // Apache POI — Excel spreadsheet generation (Export feature)
+    // Using the Android-compatible fork 'poi' (HSSF only, no XSSF).
+    // This produces .xls files and adds ~1.5 MB to the APK.
+    implementation 'org.apache.poi:poi:3.17'
+
+    // Required by POI for XML/DOM support on Android
+    implementation 'xerces:xercesImpl:2.12.0'
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
