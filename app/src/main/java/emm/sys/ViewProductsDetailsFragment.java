@@ -36,18 +36,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-
 import java.io.OutputStream;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -412,13 +400,13 @@ public class ViewProductsDetailsFragment extends Fragment {
 
         // Build filename: ProductDetails_2026-04-28.xls
         String dateStamp = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        String fileName  = "ProductDetails_" + dateStamp + ".xls";
+        String fileName  = "ProductDetails_" + dateStamp + ".csv";
 
         // ACTION_CREATE_DOCUMENT opens the system picker in "save" mode.
         // The user sees the filename pre-filled but can rename or change location.
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/vnd.ms-excel");
+        intent.setType("text/csv");
         intent.putExtra(Intent.EXTRA_TITLE, fileName);
 
         exportFileLauncher.launch(intent);
@@ -428,82 +416,82 @@ public class ViewProductsDetailsFragment extends Fragment {
      * Step 2 — Called by exportFileLauncher after the user confirms a save location.
      * Builds the workbook on a background thread and streams it to the chosen URI.
      */
-    private void writeWorkbookToUri(Uri uri) {
-        // Snapshot the list so the background thread has a stable copy
-        final List<Product> snapshot = new ArrayList<>(productList);
-
-        // Store dialog reference
-        final AlertDialog[] progress = new AlertDialog[1];
-
-        // Check if fragment is still attached before showing dialog
-        if (!isAdded() || getActivity() == null) {
-            return;
-        }
-
-        // Show dialog on UI thread
-        requireActivity().runOnUiThread(() -> {
-            if (isAdded() && getActivity() != null) {
-                progress[0] = new AlertDialog.Builder(requireActivity())
-                        .setTitle("Exporting…")
-                        .setMessage("Building spreadsheet, please wait.")
-                        .setCancelable(false)
-                        .create();
-                progress[0].show();
-            }
-        });
-
-        new Thread(() -> {
-            boolean success = false;
-            String errorMsg = "";
-
-            try (Workbook workbook = buildWorkbook(snapshot);
-                 OutputStream out = requireContext().getContentResolver().openOutputStream(uri)) {
-
-                if (out == null) throw new Exception("Could not open output stream for chosen location.");
-                workbook.write(out);
-                out.flush();
-                success = true;
-
-            } catch (Exception e) {
-                android.util.Log.e("Export", "Failed to write spreadsheet", e);
-                errorMsg = e.getMessage();
-            }
-
-            final boolean finalSuccess = success;
-            final String finalError = errorMsg;
-
-            // Update UI on main thread, checking if fragment is still alive
-            new Handler(Looper.getMainLooper()).post(() -> {
-                // Dismiss dialog if it exists and fragment is still valid
-                if (progress[0] != null && progress[0].isShowing()) {
-                    try {
-                        progress[0].dismiss();
-                    } catch (Exception e) {
-                        android.util.Log.e("Export", "Error dismissing dialog", e);
-                    }
-                }
-
-                // Check if fragment is still attached before showing result
-                if (!isAdded() || getActivity() == null) {
-                    return;
-                }
-
-                if (finalSuccess) {
-                    new AlertDialog.Builder(requireActivity())
-                            .setTitle("Export Successful")
-                            .setMessage("Spreadsheet saved successfully to your chosen location.")
-                            .setPositiveButton("OK", null)
-                            .show();
-                } else {
-                    new AlertDialog.Builder(requireActivity())
-                            .setTitle("Export Failed")
-                            .setMessage("Could not save the file.\n\nDetails: " + finalError)
-                            .setPositiveButton("OK", null)
-                            .show();
-                }
-            });
-        }).start();
-    }
+//    private void writeWorkbookToUri(Uri uri) {
+//        // Snapshot the list so the background thread has a stable copy
+//        final List<Product> snapshot = new ArrayList<>(productList);
+//
+//        // Store dialog reference
+//        final AlertDialog[] progress = new AlertDialog[1];
+//
+//        // Check if fragment is still attached before showing dialog
+//        if (!isAdded() || getActivity() == null) {
+//            return;
+//        }
+//
+//        // Show dialog on UI thread
+//        requireActivity().runOnUiThread(() -> {
+//            if (isAdded() && getActivity() != null) {
+//                progress[0] = new AlertDialog.Builder(requireActivity())
+//                        .setTitle("Exporting…")
+//                        .setMessage("Building spreadsheet, please wait.")
+//                        .setCancelable(false)
+//                        .create();
+//                progress[0].show();
+//            }
+//        });
+//
+//        new Thread(() -> {
+//            boolean success = false;
+//            String errorMsg = "";
+//
+//            try (Workbook workbook = buildWorkbook(snapshot);
+//                 OutputStream out = requireContext().getContentResolver().openOutputStream(uri)) {
+//
+//                if (out == null) throw new Exception("Could not open output stream for chosen location.");
+//                workbook.write(out);
+//                out.flush();
+//                success = true;
+//
+//            } catch (Exception e) {
+//                android.util.Log.e("Export", "Failed to write spreadsheet", e);
+//                errorMsg = e.getMessage();
+//            }
+//
+//            final boolean finalSuccess = success;
+//            final String finalError = errorMsg;
+//
+//            // Update UI on main thread, checking if fragment is still alive
+//            new Handler(Looper.getMainLooper()).post(() -> {
+//                // Dismiss dialog if it exists and fragment is still valid
+//                if (progress[0] != null && progress[0].isShowing()) {
+//                    try {
+//                        progress[0].dismiss();
+//                    } catch (Exception e) {
+//                        android.util.Log.e("Export", "Error dismissing dialog", e);
+//                    }
+//                }
+//
+//                // Check if fragment is still attached before showing result
+//                if (!isAdded() || getActivity() == null) {
+//                    return;
+//                }
+//
+//                if (finalSuccess) {
+//                    new AlertDialog.Builder(requireActivity())
+//                            .setTitle("Export Successful")
+//                            .setMessage("Spreadsheet saved successfully to your chosen location.")
+//                            .setPositiveButton("OK", null)
+//                            .show();
+//                } else {
+//                    new AlertDialog.Builder(requireActivity())
+//                            .setTitle("Export Failed")
+//                            .setMessage("Could not save the file.\n\nDetails: " + finalError)
+//                            .setPositiveButton("OK", null)
+//                            .show();
+//                }
+//            });
+//        }).start();
+//    }
 
     /**
      * Step 3 — Builds the HSSFWorkbook (Excel .xls) with full formatting.
@@ -517,202 +505,119 @@ public class ViewProductsDetailsFragment extends Fragment {
      *   Row 5+ — One row per product
      *   Last   — Totals row (sum of buying, selling, profit)
      */
-    private Workbook buildWorkbook(List<Product> products) {
-        Workbook wb = new HSSFWorkbook();
-        Sheet sheet = wb.createSheet("Product Details");
+    // Replace the buildWorkbook method with this CSV approach
+    private void writeWorkbookToUri(Uri uri) {
+        // Snapshot the list so the background thread has a stable copy
+        final List<Product> snapshot = new ArrayList<>(productList);
 
-        // ── Styles ──────────────────────────────────────────────────
-
-        // Title style — large, bold, centred
-        CellStyle titleStyle = wb.createCellStyle();
-        Font titleFont = wb.createFont();
-        titleFont.setBold(true);
-        titleFont.setFontHeightInPoints((short) 14);
-        titleStyle.setFont(titleFont);
-        titleStyle.setAlignment(HorizontalAlignment.CENTER);
-
-        // Sub-header style — italic (no color issue here)
-        CellStyle subStyle = wb.createCellStyle();
-        Font subFont = wb.createFont();
-        subFont.setItalic(true);
-        // Use HSSFColor.GREY_50_PERCENT.index instead of IndexedColors
-        subFont.setColor(HSSFColor.HSSFColorPredefined.GREY_50_PERCENT.getIndex());
-        subStyle.setFont(subFont);
-
-        // Column header style — bold white text on dark blue background
-        CellStyle headerStyle = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBold(true);
-        // Use HSSFColor.WHITE instead of IndexedColors.WHITE
-        headerFont.setColor(HSSFColor.HSSFColorPredefined.WHITE.getIndex());
-        headerStyle.setFont(headerFont);
-        // Use HSSFColor.DARK_BLUE for background
-        headerStyle.setFillForegroundColor(HSSFColor.HSSFColorPredefined.DARK_BLUE.getIndex());
-        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        headerStyle.setAlignment(HorizontalAlignment.CENTER);
-
-        // Data style — normal
-        CellStyle dataStyle = wb.createCellStyle();
-        dataStyle.setAlignment(HorizontalAlignment.LEFT);
-
-        // Currency style — right-aligned
-        CellStyle currencyStyle = wb.createCellStyle();
-        currencyStyle.setAlignment(HorizontalAlignment.RIGHT);
-
-        // Profit positive — using HSSFColor.GREEN
-        CellStyle profitGoodStyle = wb.createCellStyle();
-        Font greenFont = wb.createFont();
-        greenFont.setColor(HSSFColor.HSSFColorPredefined.GREEN.getIndex());
-        greenFont.setBold(true);
-        profitGoodStyle.setFont(greenFont);
-        profitGoodStyle.setAlignment(HorizontalAlignment.RIGHT);
-
-        // Profit negative — using HSSFColor.RED
-        CellStyle profitBadStyle = wb.createCellStyle();
-        Font redFont = wb.createFont();
-        redFont.setColor(HSSFColor.HSSFColorPredefined.RED.getIndex());
-        redFont.setBold(true);
-        profitBadStyle.setFont(redFont);
-        profitBadStyle.setAlignment(HorizontalAlignment.RIGHT);
-
-        // Totals row style — using HSSFColor.LIGHT_YELLOW
-        CellStyle totalsStyle = wb.createCellStyle();
-        Font totalsFont = wb.createFont();
-        totalsFont.setBold(true);
-        totalsStyle.setFont(totalsFont);
-        totalsStyle.setFillForegroundColor(HSSFColor.HSSFColorPredefined.LIGHT_YELLOW.getIndex());
-        totalsStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        totalsStyle.setAlignment(HorizontalAlignment.RIGHT);
-
-        // ── Row 0: Title ─────────────────────────────────────────────
-        Row titleRow = sheet.createRow(0);
-        Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("Product Details Report");
-        titleCell.setCellStyle(titleStyle);
-
-        // Merge cells for title (optional but nice)
-        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 8));
-
-        // ── Row 1: Generated date ─────────────────────────────────────
-        Row dateRow = sheet.createRow(1);
-        Cell dateCell = dateRow.createCell(0);
-        String nowStr = new SimpleDateFormat("EEEE, MMMM dd yyyy  HH:mm", Locale.getDefault()).format(new Date());
-        dateCell.setCellValue("Generated: " + nowStr);
-        dateCell.setCellStyle(subStyle);
-        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 8));
-
-        // ── Row 2: Summary stats ──────────────────────────────────────
-        Row statsRow = sheet.createRow(2);
-        int totalProducts = products.size();
-        long totalSelling = 0;
-        Set<String> uniqueNames = new HashSet<>();
-        for (Product p : products) {
-            totalSelling += p.getSellingPrice();
-            uniqueNames.add(p.getProductName());
-        }
-        long avgSelling = totalProducts > 0 ? totalSelling / totalProducts : 0;
-
-        Cell totalCell = statsRow.createCell(0);
-        totalCell.setCellValue("Total Products: " + totalProducts);
-
-        Cell avgCell = statsRow.createCell(2);
-        avgCell.setCellValue("Avg Selling Price: KES " + NumberFormat.getInstance().format(avgSelling));
-
-        Cell uniqueCell = statsRow.createCell(5);
-        uniqueCell.setCellValue("Unique Products: " + uniqueNames.size());
-
-        // ── Row 3: Blank spacer ───────────────────────────────────────
-        sheet.createRow(3);
-
-        // ── Row 4: Column headers ─────────────────────────────────────
-        String[] headers = {
-                "#", "Product Name", "Weight", "Flavour",
-                "Buying Price (KES)", "Selling Price (KES)", "Profit (KES)",
-                "Profit Margin (%)", "Date Added"
-        };
-        Row headerRow = sheet.createRow(4);
-        for (int i = 0; i < headers.length; i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers[i]);
-            cell.setCellStyle(headerStyle);
+        // Check if fragment is still attached
+        if (!isAdded() || getActivity() == null) {
+            return;
         }
 
-        // ── Rows 5+: Product data ─────────────────────────────────────
-        int rowNum = 5;
-        long grandBuying = 0;
-        long grandSelling = 0;
-        long grandProfit = 0;
+        // Show progress dialog
+        AlertDialog progress = new AlertDialog.Builder(requireActivity())
+                .setTitle("Exporting…")
+                .setMessage("Creating CSV file, please wait.")
+                .setCancelable(false)
+                .create();
 
-        for (Product p : products) {
-            Row row = sheet.createRow(rowNum++);
-
-            row.createCell(0).setCellValue(p.getId());
-
-            Cell nameCell = row.createCell(1);
-            nameCell.setCellValue(p.getProductName());
-            nameCell.setCellStyle(dataStyle);
-
-            Cell weightCell = row.createCell(2);
-            weightCell.setCellValue(p.getWeight());
-            weightCell.setCellStyle(dataStyle);
-
-            Cell flavourCell = row.createCell(3);
-            flavourCell.setCellValue(p.getFlavour());
-            flavourCell.setCellStyle(dataStyle);
-
-            Cell buyCell = row.createCell(4);
-            buyCell.setCellValue(p.getBuyingPrice());
-            buyCell.setCellStyle(currencyStyle);
-
-            Cell sellCell = row.createCell(5);
-            sellCell.setCellValue(p.getSellingPrice());
-            sellCell.setCellStyle(currencyStyle);
-
-            // Profit — colour-coded
-            Cell profitCell = row.createCell(6);
-            profitCell.setCellValue(p.getProfit());
-            profitCell.setCellStyle(p.getProfit() >= 0 ? profitGoodStyle : profitBadStyle);
-
-            // Profit margin %
-            double margin = p.getBuyingPrice() > 0
-                    ? ((double) p.getProfit() / p.getBuyingPrice()) * 100 : 0;
-            Cell marginCell = row.createCell(7);
-            marginCell.setCellValue(Math.round(margin * 10.0) / 10.0); // 1 decimal
-            marginCell.setCellStyle(currencyStyle);
-
-            Cell tsCell = row.createCell(8);
-            tsCell.setCellValue(formatTimestamp(p.getTimestamp()));
-            tsCell.setCellStyle(dataStyle);
-
-            grandBuying += p.getBuyingPrice();
-            grandSelling += p.getSellingPrice();
-            grandProfit += p.getProfit();
+        try {
+            progress.show();
+        } catch (Exception e) {
+            // Dialog couldn't be shown
         }
 
-        // ── Totals row ────────────────────────────────────────────────
-        Row totalsRow = sheet.createRow(rowNum);
-        Cell totalsLabel = totalsRow.createCell(0);
-        totalsLabel.setCellValue("TOTALS");
-        totalsLabel.setCellStyle(totalsStyle);
+        new Thread(() -> {
+            boolean success = false;
+            String errorMsg = "";
 
-        Cell totBuyCell = totalsRow.createCell(4);
-        totBuyCell.setCellValue(grandBuying);
-        totBuyCell.setCellStyle(totalsStyle);
+            try (OutputStream out = requireContext().getContentResolver().openOutputStream(uri)) {
+                if (out == null) throw new Exception("Could not open output stream");
 
-        Cell totSellCell = totalsRow.createCell(5);
-        totSellCell.setCellValue(grandSelling);
-        totSellCell.setCellStyle(totalsStyle);
+                // Create CSV content
+                StringBuilder csv = new StringBuilder();
 
-        Cell totProfitCell = totalsRow.createCell(6);
-        totProfitCell.setCellValue(grandProfit);
-        totProfitCell.setCellStyle(totalsStyle);
+                // Add headers
+                csv.append("#,Product Name,Weight,Flavour,Buying Price (KES),Selling Price (KES),Profit (KES),Profit Margin (%),Date Added\n");
 
-        // ── Auto-size all columns ─────────────────────────────────────
-        for (int i = 0; i < headers.length; i++) {
-            sheet.autoSizeColumn(i);
+                // Add data rows
+                for (Product p : snapshot) {
+                    double margin = p.getBuyingPrice() > 0
+                            ? ((double) p.getProfit() / p.getBuyingPrice()) * 100 : 0;
+
+                    csv.append(p.getId()).append(",")
+                            .append(escapeCSV(p.getProductName())).append(",")
+                            .append(escapeCSV(p.getWeight())).append(",")
+                            .append(escapeCSV(p.getFlavour())).append(",")
+                            .append(p.getBuyingPrice()).append(",")
+                            .append(p.getSellingPrice()).append(",")
+                            .append(p.getProfit()).append(",")
+                            .append(String.format("%.1f", margin)).append(",")
+                            .append(formatTimestamp(p.getTimestamp())).append("\n");
+                }
+
+                // Add summary
+                csv.append("\n\nSUMMARY\n");
+                csv.append("Total Products:,").append(snapshot.size()).append("\n");
+
+                int totalSelling = 0;
+                for (Product p : snapshot) {
+                    totalSelling += p.getSellingPrice();
+                }
+                int avgSelling = snapshot.size() > 0 ? totalSelling / snapshot.size() : 0;
+                csv.append("Average Selling Price:,").append(avgSelling).append("\n");
+
+                // Write to file
+                out.write(csv.toString().getBytes());
+                out.flush();
+                success = true;
+
+            } catch (Exception e) {
+                android.util.Log.e("Export", "Failed to write CSV", e);
+                errorMsg = e.getMessage();
+            }
+
+            final boolean finalSuccess = success;
+            final String finalError = errorMsg;
+
+            new Handler(Looper.getMainLooper()).post(() -> {
+                // Dismiss dialog
+                if (progress != null && progress.isShowing()) {
+                    try {
+                        progress.dismiss();
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+
+                // Check if fragment is still valid
+                if (!isAdded() || getActivity() == null) return;
+
+                if (finalSuccess) {
+                    new AlertDialog.Builder(requireActivity())
+                            .setTitle("Export Successful")
+                            .setMessage("CSV file saved successfully.\n\nYou can open this file in Excel or any spreadsheet application.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                } else {
+                    new AlertDialog.Builder(requireActivity())
+                            .setTitle("Export Failed")
+                            .setMessage("Could not save the file.\n\nDetails: " + finalError)
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
+            });
+        }).start();
+    }
+
+    // Helper method to escape CSV fields
+    private String escapeCSV(String field) {
+        if (field == null) return "";
+        if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
+            return "\"" + field.replace("\"", "\"\"") + "\"";
         }
-
-        return wb;
+        return field;
     }
     // ---------------------------------------------------------------
     // Navigation helpers
