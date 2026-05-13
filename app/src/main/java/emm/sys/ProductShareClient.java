@@ -109,28 +109,46 @@ public class ProductShareClient {
                     .getSystemService(Context.WIFI_SERVICE);
             if (wm == null) return null;
 
+            // First try: Gateway IP (hotspot host)
             int gatewayInt = wm.getDhcpInfo().gateway;
-            if (gatewayInt == 0) return null;
-
-            // Android stores IP as little-endian int; convert to string
-            if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-                gatewayInt = Integer.reverseBytes(gatewayInt);
+            if (gatewayInt != 0) {
+                String gateway = intToIp(gatewayInt);
+                Log.d(TAG, "Gateway IP: " + gateway);
+                return gateway;
             }
-            return InetAddress.getByAddress(
-                    new byte[]{
-                            (byte)(gatewayInt >> 24),
-                            (byte)(gatewayInt >> 16),
-                            (byte)(gatewayInt >> 8),
-                            (byte)(gatewayInt)
-                    }
-            ).getHostAddress();
 
+            // Second try: Try common hotspot IPs
+            String[] commonIps = {"192.168.43.1", "192.168.42.1", "192.168.1.1", "172.20.10.1"};
+            for (String ip : commonIps) {
+                if (isReachable(ip)) {
+                    Log.d(TAG, "Found reachable IP: " + ip);
+                    return ip;
+                }
+            }
+
+            return null;
         } catch (Exception e) {
             Log.e(TAG, "resolveReceiverHost error", e);
             return null;
         }
     }
 
+    private static String intToIp(int ip) {
+        return String.format("%d.%d.%d.%d",
+                (ip & 0xff),
+                (ip >> 8 & 0xff),
+                (ip >> 16 & 0xff),
+                (ip >> 24 & 0xff));
+    }
+
+    private static boolean isReachable(String ip) {
+        try {
+            InetAddress address = InetAddress.getByName(ip);
+            return address.isReachable(2000); // 2 second timeout
+        } catch (Exception e) {
+            return false;
+        }
+    }
     // ----------------------------------------------------------------
     // Ping the receiver to confirm:
     //   a) The EMM Sales App is installed and running the server

@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -133,16 +135,105 @@ public class ViewProductsDetailsFragment extends Fragment {
 
     // ---------------------------------------------------------------
     // Share server lifecycle
-    // ---------------------------------------------------------------
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Ensure server is running when fragment is visible
+        // But don't create a new instance if it's already running
+        if (shareServer == null) {
+            startShareServer();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Don't stop the server here! It needs to keep running
+        // even when fragment is paused but activity is still visible
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Stop server when fragment is destroyed
+        if (shareServer != null) {
+            shareServer.stop();
+            shareServer = null;
+        }
+    }
+
     private void startShareServer() {
+        // Prevent multiple server instances
+        if (shareServer != null) {
+            Log.d("ViewProductsDetails", "Server already running");
+            updateServerStatusIndicator(true);
+            return;
+        }
+
         try {
             shareServer = new ProductShareServer(requireContext());
             shareServer.start();
-        } catch (java.io.IOException e) {
-            // Non-fatal — device simply won't be reachable as a receiver
-            android.util.Log.w("ViewProductsDetails", "Could not start share server: " + e.getMessage());
+            Log.d("ViewProductsDetails", "✓ Share server started on port " + ProductShareServer.PORT);
+
+            // Optional: Show a subtle indicator that server is running
+            if (isAdded() && getActivity() != null) {
+                // You could show a small notification or icon
+                Toast.makeText(getActivity(),
+                        "Device ready to receive products via WiFi",
+                        Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e("ViewProductsDetails", "✗ Could not start share server: " + e.getMessage());
+            shareServer = null;
         }
     }
+
+    private void updateServerStatusIndicator(boolean isRunning) {
+        if (getView() != null) {
+            TextView statusText = getView().findViewById(R.id.serverStatusText);
+//            TextView statusText1 = getView().findViewById(R.id.serverStatusText1);
+            if (statusText != null) {
+                if (isRunning) {
+                    if (statusText.getText().toString().contains("Server:")) {
+                        // Full text version (stats card)
+                        statusText.setText("🟢 Server: On");
+                        statusText.setTextColor(Color.parseColor("#4CAF50"));
+                    } else {
+                        // Badge version (near FAB)
+                        statusText.setText("🟢");
+                        statusText.setText("Server running on port " + ProductShareServer.PORT);
+                    }
+                } else {
+                    if (statusText.getText().toString().contains("Server:")) {
+                        // Full text version
+                        statusText.setText("⚫ Server: Off");
+                        statusText.setTextColor(Color.parseColor("#9E9E9E"));
+                    } else {
+                        // Badge version
+                        statusText.setText("⚫");
+                        statusText.setText("Server not running");
+                    }
+                }
+                statusText.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    private void checkServerStatus() {
+        if (shareServer != null) {
+            Toast.makeText(getActivity(),
+                    "✓ Server is running on port " + ProductShareServer.PORT,
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getActivity(),
+                    "✗ Server is NOT running",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ---------------------------------------------------------------
+
 
     @Override
     public void onDestroy() {
@@ -265,7 +356,7 @@ public class ViewProductsDetailsFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Quick Actions");
 
-        String[] actions = {"Refresh List", "Export Data", "Share", "Add New Product", "Delete All Products"};
+        String[] actions = {"Refresh List", "Export Data", "Share", "Add New Product", "Delete All Products", "Check Server Status"};
 
         builder.setItems(actions, (dialog, which) -> {
             switch (which) {
@@ -288,6 +379,9 @@ public class ViewProductsDetailsFragment extends Fragment {
 
                 case 4: // Delete All
                     showDeleteAllConfirmation();
+                    break;
+                case 5: // Check Server Status (NEW)
+                    checkServerStatus();
                     break;
             }
         });
