@@ -412,7 +412,7 @@ public class ViewProductsDetailsFragment extends Fragment {
         // Show progress dialog
         AlertDialog progressDialog = new AlertDialog.Builder(getActivity())
                 .setTitle("Sharing Products")
-                .setMessage("Connecting to nearby device…")
+                .setMessage("Connecting to nearby device…\nMake sure the receiving device has the app open.")
                 .setCancelable(false)
                 .create();
         progressDialog.show();
@@ -425,7 +425,34 @@ public class ViewProductsDetailsFragment extends Fragment {
             // Back to UI thread
             new Handler(Looper.getMainLooper()).post(() -> {
                 progressDialog.dismiss();
-                handleShareResponse(response);
+
+                if (response.result == ProductShareClient.ShareResult.SUCCESS) {
+                    String msg = "✓ Transfer complete!\n" + response.inserted + " product(s) sent";
+                    if (response.skipped > 0) {
+                        msg += "\n" + response.skipped + " skipped (already exist)";
+                    }
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Share Successful")
+                            .setMessage(msg)
+                            .setPositiveButton("OK", null)
+                            .show();
+                } else if (response.result == ProductShareClient.ShareResult.DATA_TRANSFER_ERROR) {
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Share Failed")
+                            .setMessage("Could not connect to receiving device.\n\n" +
+                                    "Make sure:\n" +
+                                    "1. Both devices have the app open\n" +
+                                    "2. Receiving device is on this screen\n" +
+                                    "3. Both are on the same WiFi/Hotspot")
+                            .setPositiveButton("OK", null)
+                            .show();
+                } else {
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Network Error")
+                            .setMessage("Network error. Please check your connection.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
             });
         }).start();
     }
