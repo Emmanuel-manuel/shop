@@ -48,11 +48,21 @@ public class ProductShareServer extends NanoHTTPD {
 
     private final Context context;
     private final DBHelper dbHelper;
+    private ConnectionListener connectionListener;
+
+    public interface ConnectionListener {
+        void onDeviceConnected();
+        void onDataReceived(int productCount);
+    }
 
     public ProductShareServer(Context context) {
         super(PORT);
         this.context = context;
         this.dbHelper = new DBHelper(context);
+    }
+
+    public void setConnectionListener(ConnectionListener listener) {
+        this.connectionListener = listener;
     }
 
     @Override
@@ -157,95 +167,12 @@ public class ProductShareServer extends NanoHTTPD {
     // ------------------------------------------------------------------
     // /receive handler
     // ------------------------------------------------------------------
-//    private Response handleReceive(IHTTPSession session) throws IOException, NanoHTTPD.ResponseException {
-//        // Read request body
-//        Map<String, String> files = new java.util.HashMap<>();
-//        session.parseBody(files);
-//        String body = files.get("postData");
-//
-//        if (body == null || body.isEmpty()) {
-//            return newFixedLengthResponse(
-//                    Response.Status.BAD_REQUEST,
-//                    "application/json",
-//                    "{\"status\":\"error\",\"message\":\"Empty body\"}"
-//            );
-//        }
-//
-//        // Validate schema before attempting insert
-//        if (!verifyDatabaseSchema()) {
-//            return newFixedLengthResponse(
-//                    Response.Status.OK,
-//                    "application/json",
-//                    "{\"status\":\"schema_error\",\"message\":\"Schema mismatch\"}"
-//            );
-//        }
-//
-//        try {
-//            JSONArray products = new JSONArray(body);
-//            int inserted = 0;
-//            int skipped = 0;
-//
-//            SQLiteDatabase db = dbHelper.getWritableDatabase();
-//            db.beginTransaction();
-//            try {
-//                for (int i = 0; i < products.length(); i++) {
-//                    JSONObject p = products.getJSONObject(i);
-//
-//                    String productName  = p.getString("product_name");
-//                    String weight       = p.getString("weight");
-//                    String flavour      = p.getString("flavour");
-//                    int buyingPrice     = p.getInt("buying_price");
-//                    int sellingPrice    = p.getInt("selling_price");
-//                    int profit          = p.getInt("profit");
-//                    String timestamp    = p.getString("timestamp");
-//
-//                    // Skip duplicate (same name + weight + flavour)
-//                    boolean exists = dbHelper.checkProductDetailsExists(productName, weight, flavour);
-//                    if (exists) {
-//                        skipped++;
-//                        continue;
-//                    }
-//
-//                    android.content.ContentValues values = new android.content.ContentValues();
-//                    values.put("product_name", productName);
-//                    values.put("weight", weight);
-//                    values.put("flavour", flavour);
-//                    values.put("buying_price", buyingPrice);
-//                    values.put("selling_price", sellingPrice);
-//                    values.put("profit", profit);
-//                    values.put("timestamp", timestamp);
-//
-//                    long result = db.insert("product_details", null, values);
-//                    if (result != -1) inserted++;
-//                }
-//                db.setTransactionSuccessful();
-//            } finally {
-//                db.endTransaction();
-//            }
-//
-//            JSONObject response = new JSONObject();
-//            response.put("status", "ok");
-//            response.put("inserted", inserted);
-//            response.put("skipped", skipped);
-//
-//            return newFixedLengthResponse(
-//                    Response.Status.OK,
-//                    "application/json",
-//                    response.toString()
-//            );
-//
-//        } catch (Exception e) {
-//            Log.e(TAG, "Failed to process received products", e);
-//            return newFixedLengthResponse(
-//                    Response.Status.INTERNAL_ERROR,
-//                    "application/json",
-//                    "{\"status\":\"error\",\"message\":\"Failed to process data\"}"
-//            );
-//        }
-//    }
-
     private Response handleReceive(IHTTPSession session) throws IOException {
         Log.d(TAG, "Handling receive request");
+
+        if (connectionListener != null) {
+            connectionListener.onDeviceConnected();
+        }
 
         // Read request body
         Map<String, String> files = new java.util.HashMap<>();
@@ -327,6 +254,10 @@ public class ProductShareServer extends NanoHTTPD {
                 Log.d(TAG, "Transaction successful. Inserted: " + inserted + ", Skipped: " + skipped);
             } finally {
                 db.endTransaction();
+            }
+
+            if (connectionListener != null && inserted > 0) {
+                connectionListener.onDataReceived(inserted);
             }
 
             JSONObject response = new JSONObject();

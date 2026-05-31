@@ -1,8 +1,6 @@
 package emm.sys;
 
 import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -24,13 +22,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,7 +38,6 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -80,6 +74,8 @@ public class ViewProductsDetailsFragment extends Fragment {
     // device can also act as a receiver when its hotspot is ON.
     // ---------------------------------------------------------------
     private ProductShareServer shareServer;
+
+    private boolean isDeviceConnected = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -163,57 +159,90 @@ public class ViewProductsDetailsFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
+        if (shareServer != null) {
+            shareServer.stop();
+        }
+    }
+
+
+    // ...............................................................................
+    private void initializeViews(View view) {
+        productsRecyclerView = view.findViewById(R.id.productsRecyclerView);
+        totalProductsText    = view.findViewById(R.id.totalProductsText);
+        averagePriceText     = view.findViewById(R.id.averagePriceText);
+        uniqueProductsText   = view.findViewById(R.id.uniqueProductsText);
+        searchEditText       = view.findViewById(R.id.searchEditText);
+        clearSearchButton    = view.findViewById(R.id.clearSearchButton);
+        filterAllButton      = view.findViewById(R.id.filterAllButton);
+        filterByNameButton   = view.findViewById(R.id.filterByNameButton);
+        filterByPriceButton  = view.findViewById(R.id.filterByPriceButton);
+        emptyStateLayout     = view.findViewById(R.id.emptyStateLayout);
+        fabQuickActions      = view.findViewById(R.id.fabQuickActions);
+    }
+    //..................................................................................
+
     private void startShareServer() {
         // Prevent multiple server instances
         if (shareServer != null) {
-            Log.d("ViewProductsDetails", "Server already running");
-            updateServerStatusIndicator(true);
+            updateServerStatusIndicator(isDeviceConnected);
             return;
         }
 
         try {
             shareServer = new ProductShareServer(requireContext());
-            shareServer.start();
-            Log.d("ViewProductsDetails", "✓ Share server started on port " + ProductShareServer.PORT);
 
-            // Optional: Show a subtle indicator that server is running
+            shareServer.setConnectionListener(new ProductShareServer.ConnectionListener() {
+                @Override
+                public void onDeviceConnected() {
+                    isDeviceConnected = true;
+                    requireActivity().runOnUiThread(() -> {
+                        updateServerStatusIndicator(true);
+                        Toast.makeText(getActivity(), "✓ Device connected!", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onDataReceived(int productCount) {
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getActivity(), "✓ Received " + productCount + " product(s)!", Toast.LENGTH_LONG).show();
+                        loadProductData();
+                    });
+                }
+            });
+
+            shareServer.start();
+            Log.d("ViewProductsDetails", "Share server started on port " + ProductShareServer.PORT);
+
+            isDeviceConnected = false;
+            updateServerStatusIndicator(false);
+
             if (isAdded() && getActivity() != null) {
-                // You could show a small notification or icon
-                Toast.makeText(getActivity(),
-                        "Device ready to receive products via WiFi",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Ready to receive products", Toast.LENGTH_SHORT).show();
             }
         } catch (IOException e) {
-            Log.e("ViewProductsDetails", "✗ Could not start share server: " + e.getMessage());
+            Log.e("ViewProductsDetails", "Could not start share server: " + e.getMessage());
             shareServer = null;
+            updateServerStatusIndicator(false);
         }
     }
 
-    private void updateServerStatusIndicator(boolean isRunning) {
+    private void updateServerStatusIndicator(boolean isConnected) {
         if (getView() != null) {
             TextView statusText = getView().findViewById(R.id.serverStatusText);
-//            TextView statusText1 = getView().findViewById(R.id.serverStatusText1);
             if (statusText != null) {
-                if (isRunning) {
-                    if (statusText.getText().toString().contains("Server:")) {
-                        // Full text version (stats card)
-                        statusText.setText("🟢 Server: On");
-                        statusText.setTextColor(Color.parseColor("#4CAF50"));
-                    } else {
-                        // Badge version (near FAB)
-                        statusText.setText("🟢");
-                        statusText.setText("Server running on port " + ProductShareServer.PORT);
-                    }
+                statusText.setText("🟢");
+                if (isConnected) {
+                    statusText.setTextColor(Color.parseColor("#4CAF50")); //color green
+//                    statusText.setTooltipText("Device connected");
                 } else {
-                    if (statusText.getText().toString().contains("Server:")) {
-                        // Full text version
-                        statusText.setText("⚫ Server: Off");
-                        statusText.setTextColor(Color.parseColor("#9E9E9E"));
-                    } else {
-                        // Badge version
-                        statusText.setText("⚫");
-                        statusText.setText("Server not running");
-                    }
+                    statusText.setTextColor(Color.parseColor("#9E9E9E")); //color grey
+//                    statusText.setTooltipText("Waiting for connection");
                 }
                 statusText.setVisibility(View.VISIBLE);
             }
@@ -234,31 +263,6 @@ public class ViewProductsDetailsFragment extends Fragment {
 
     // ---------------------------------------------------------------
 
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (dbHelper != null) {
-            dbHelper.close();
-        }
-        if (shareServer != null) {
-            shareServer.stop();
-        }
-    }
-
-    private void initializeViews(View view) {
-        productsRecyclerView = view.findViewById(R.id.productsRecyclerView);
-        totalProductsText    = view.findViewById(R.id.totalProductsText);
-        averagePriceText     = view.findViewById(R.id.averagePriceText);
-        uniqueProductsText   = view.findViewById(R.id.uniqueProductsText);
-        searchEditText       = view.findViewById(R.id.searchEditText);
-        clearSearchButton    = view.findViewById(R.id.clearSearchButton);
-        filterAllButton      = view.findViewById(R.id.filterAllButton);
-        filterByNameButton   = view.findViewById(R.id.filterByNameButton);
-        filterByPriceButton  = view.findViewById(R.id.filterByPriceButton);
-        emptyStateLayout     = view.findViewById(R.id.emptyStateLayout);
-        fabQuickActions      = view.findViewById(R.id.fabQuickActions);
-    }
 
     private void setupRecyclerView() {
         productList         = new ArrayList<>();
@@ -412,7 +416,7 @@ public class ViewProductsDetailsFragment extends Fragment {
         // Show progress dialog
         AlertDialog progressDialog = new AlertDialog.Builder(getActivity())
                 .setTitle("Sharing Products")
-                .setMessage("Connecting to nearby device…\nMake sure the receiving device has the app open.")
+                .setMessage("Connecting to nearby device…")
                 .setCancelable(false)
                 .create();
         progressDialog.show();
@@ -460,34 +464,34 @@ public class ViewProductsDetailsFragment extends Fragment {
     /**
      * Translates the ShareResponse into a user-facing message.
      */
-    private void handleShareResponse(ProductShareClient.ShareResponse response) {
-        if (getActivity() == null) return;
-
-        switch (response.result) {
-            case SUCCESS:
-                String msg = "Transfer complete!\n"
-                        + response.inserted + " product(s) sent";
-                if (response.skipped > 0) {
-                    msg += ", " + response.skipped + " skipped (already exist on receiver)";
-                }
-                showShareResultDialog("Share Successful", msg, false);
-                break;
-
-            case DATA_TRANSFER_ERROR:
-                // Covers: receiver app not found, wrong app, schema mismatch
-                showShareResultDialog("Transfer Failed",
-                        "Data transfer error, please contact your developer or system admin",
-                        true);
-                break;
-
-            case NETWORK_ERROR:
-                showShareResultDialog("Transfer Failed",
-                        "Could not reach the other device.\n" +
-                                "Make sure both devices are on the same WiFi/hotspot and try again.",
-                        true);
-                break;
-        }
-    }
+//    private void handleShareResponse(ProductShareClient.ShareResponse response) {
+//        if (getActivity() == null) return;
+//
+//        switch (response.result) {
+//            case SUCCESS:
+//                String msg = "Transfer complete!\n"
+//                        + response.inserted + " product(s) sent";
+//                if (response.skipped > 0) {
+//                    msg += ", " + response.skipped + " skipped (already exist on receiver)";
+//                }
+//                showShareResultDialog("Share Successful", msg, false);
+//                break;
+//
+//            case DATA_TRANSFER_ERROR:
+//                // Covers: receiver app not found, wrong app, schema mismatch
+//                showShareResultDialog("Transfer Failed",
+//                        "Data transfer error, please contact your developer or system admin",
+//                        true);
+//                break;
+//
+//            case NETWORK_ERROR:
+//                showShareResultDialog("Transfer Failed",
+//                        "Could not reach the other device.\n" +
+//                                "Make sure both devices are on the same WiFi/hotspot and try again.",
+//                        true);
+//                break;
+//        }
+//    }
 
     private void showShareResultDialog(String title, String message, boolean isError) {
         if (getActivity() == null) return;
@@ -537,82 +541,6 @@ public class ViewProductsDetailsFragment extends Fragment {
      * Step 2 — Called by exportFileLauncher after the user confirms a save location.
      * Builds the workbook on a background thread and streams it to the chosen URI.
      */
-//    private void writeWorkbookToUri(Uri uri) {
-//        // Snapshot the list so the background thread has a stable copy
-//        final List<Product> snapshot = new ArrayList<>(productList);
-//
-//        // Store dialog reference
-//        final AlertDialog[] progress = new AlertDialog[1];
-//
-//        // Check if fragment is still attached before showing dialog
-//        if (!isAdded() || getActivity() == null) {
-//            return;
-//        }
-//
-//        // Show dialog on UI thread
-//        requireActivity().runOnUiThread(() -> {
-//            if (isAdded() && getActivity() != null) {
-//                progress[0] = new AlertDialog.Builder(requireActivity())
-//                        .setTitle("Exporting…")
-//                        .setMessage("Building spreadsheet, please wait.")
-//                        .setCancelable(false)
-//                        .create();
-//                progress[0].show();
-//            }
-//        });
-//
-//        new Thread(() -> {
-//            boolean success = false;
-//            String errorMsg = "";
-//
-//            try (Workbook workbook = buildWorkbook(snapshot);
-//                 OutputStream out = requireContext().getContentResolver().openOutputStream(uri)) {
-//
-//                if (out == null) throw new Exception("Could not open output stream for chosen location.");
-//                workbook.write(out);
-//                out.flush();
-//                success = true;
-//
-//            } catch (Exception e) {
-//                android.util.Log.e("Export", "Failed to write spreadsheet", e);
-//                errorMsg = e.getMessage();
-//            }
-//
-//            final boolean finalSuccess = success;
-//            final String finalError = errorMsg;
-//
-//            // Update UI on main thread, checking if fragment is still alive
-//            new Handler(Looper.getMainLooper()).post(() -> {
-//                // Dismiss dialog if it exists and fragment is still valid
-//                if (progress[0] != null && progress[0].isShowing()) {
-//                    try {
-//                        progress[0].dismiss();
-//                    } catch (Exception e) {
-//                        android.util.Log.e("Export", "Error dismissing dialog", e);
-//                    }
-//                }
-//
-//                // Check if fragment is still attached before showing result
-//                if (!isAdded() || getActivity() == null) {
-//                    return;
-//                }
-//
-//                if (finalSuccess) {
-//                    new AlertDialog.Builder(requireActivity())
-//                            .setTitle("Export Successful")
-//                            .setMessage("Spreadsheet saved successfully to your chosen location.")
-//                            .setPositiveButton("OK", null)
-//                            .show();
-//                } else {
-//                    new AlertDialog.Builder(requireActivity())
-//                            .setTitle("Export Failed")
-//                            .setMessage("Could not save the file.\n\nDetails: " + finalError)
-//                            .setPositiveButton("OK", null)
-//                            .show();
-//                }
-//            });
-//        }).start();
-//    }
 
     /**
      * Step 3 — Builds the HSSFWorkbook (Excel .xls) with full formatting.

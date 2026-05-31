@@ -42,7 +42,7 @@
 
                 <!-- Server status badge -->
                 <TextView
-                    android:id="@+id/serverStatusText1"
+                    android:id="@+id/serverStatusText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="⚫"
@@ -283,32 +283,7 @@
                 android:layout_height="24dp"
                 android:background="@color/light_gray"/>
 
-            <!-- NEW: Server Status Indicator -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center">
 
-                <TextView
-                    android:id="@+id/serverStatusText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="⚫ Server: Off"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/gray"
-                    android:visibility="visible"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Share Status"
-                    android:textSize="10sp"
-                    android:textColor="@color/gray"/>
-
-            </LinearLayout>
 
 
         </LinearLayout>
