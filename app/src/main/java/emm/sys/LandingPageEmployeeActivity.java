@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Calendar;
 
-public class LandingPageActivity extends AppCompatActivity {
+public class LandingPageEmployeeActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
@@ -37,11 +37,12 @@ public class LandingPageActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavView;
     private NavigationView navigationView;
     private ImageView profileIcon;
+    private static String currentUserEmail; // Static variable to hold user email
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_landing_page);
+        setContentView(R.layout.activity_landing_page_employee);
 
         TextView welcomeText = findViewById(R.id.welcomeText);
         TextView welcomeTime = findViewById(R.id.welcomeTime);
@@ -74,11 +75,12 @@ public class LandingPageActivity extends AppCompatActivity {
 
 // .......................... WELCOME MESSAGES...................................
         String email = getIntent().getStringExtra("USER_EMAIL");
+        currentUserEmail = email; // Store in static variable
 
         if (email != null) {
-            welcomeText.setText("Welcome Admin, " + email + "!");
+            welcomeText.setText("Welcome, " + email + "!");
         } else {
-            welcomeText.setText("Welcome Admin!");
+            welcomeText.setText("Welcome!");
         }
 
         // Set time-based greeting
@@ -102,18 +104,11 @@ public class LandingPageActivity extends AppCompatActivity {
 
             if (id == R.id.home) {
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragmentContainer, new HomeFragment())
+                        .replace(R.id.fragmentContainer, new HomeEmployeeFragment())
                         .commit();
                 return true;
-            } else if (id == R.id.add_products) {
-                handleAddProductDetailsNavigation();
-                return true;
-            } else if (id == R.id.receive_inventory) {
-                handleReceiveInventoryNavigation();
-                return true;
-            } else if (id == R.id.issue_goods) {
-                transition();
-                handleIssueGoodsNavigation();
+            } else if (id == R.id.receive_goods) {
+                handleReceiveTodayStockNavigation();
                 return true;
             } else if (id == R.id.sales) {
                 transition();
@@ -122,20 +117,11 @@ public class LandingPageActivity extends AppCompatActivity {
             } else if (id == R.id.notepad) {
                 handleNotepadNavigation();
                 return true;
-            } else if (id == R.id.logout) {
-                performLogout();
-                return true;
-            } else if (id == R.id.settings) {
+            } else if (id == R.id.viewReceivedGoodsDetails) {
+                handleViewEmployeeStockIssuedGoodsNavigation();
                 return true;
             } else if (id == R.id.productDetails) {
                 handleViewProductDetailsNavigation();
-                return true;
-            } else if (id == R.id.inventoryDetails) {
-                handleViewTodayInventoryNavigation();
-                return true;
-            } else if (id == R.id.viewIssuedDetails) {
-                transition();
-                handleViewIssuedGoodsNavigation();
                 return true;
             } else if (id == R.id.viewSalesDetails) {
                 transition();
@@ -147,7 +133,12 @@ public class LandingPageActivity extends AppCompatActivity {
                 return true;
             } else if (id == R.id.email) {
                 return true;
+            } else if (id == R.id.settings) {
+                return true;
             } else if (id == R.id.contact) {
+                return true;
+            } else if (id == R.id.logout) {
+                performLogout();
                 return true;
             }
             return false;
@@ -155,7 +146,7 @@ public class LandingPageActivity extends AppCompatActivity {
 
         // ............. Working with Fragments of Bottom Navigation Buttons ..............
         // BEGINNING OF BOTTOM NAVIGATION VIEW
-        replaceFragment(new HomeFragment());
+        replaceFragment(new HomeEmployeeFragment());
 
         bottomNavView = findViewById(R.id.bottom_navView);
 
@@ -165,17 +156,17 @@ public class LandingPageActivity extends AppCompatActivity {
 
             switch (item.getItemId()) {
                 case R.id.home:
-                    replaceFragment(new HomeFragment());
+                    replaceFragment(new HomeEmployeeFragment());
                     break;
-                case R.id.issue_goods:
+                case R.id.receive_goods:
                     transition();
-                    replaceFragment(new IssueGoodsFragment());
+                    replaceFragment(new EmployeeReceiveGoodsFragment());
                     break;
-                case R.id.to_pay:
-                    replaceFragment(new ToPayFragment());
+                case R.id.view_sales:
+                    replaceFragment(new ViewSalesFragment());
                     break;
-                case R.id.announcements:
-                    replaceFragment(new AnnouncementFragment());
+                case R.id.notepad:
+                    replaceFragment(new NotepadFragment());
                     break;
             }
             return true;
@@ -187,7 +178,7 @@ public class LandingPageActivity extends AppCompatActivity {
         // Initialize FAB and the bottom navigation View
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> {
-            handleReceiveInventoryNavigation();
+            handleSalesNavigation();
         });
     }
 
@@ -239,15 +230,15 @@ public class LandingPageActivity extends AppCompatActivity {
         bottomNavView.setSelectedItemId(0);
 
         // If you have a SettingsFragment, uncomment below:
-         getSupportFragmentManager().beginTransaction()
-                 .setCustomAnimations(
-                         R.anim.fragment_enter,
-                         R.anim.fragment_exit,
-                         R.anim.fragment_enter,
-                         R.anim.fragment_exit)
-                 .replace(R.id.fragmentContainer, new SettingsFragment())
-                 .addToBackStack(null)
-                 .commit();
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit,
+                        R.anim.fragment_enter,
+                        R.anim.fragment_exit)
+                .replace(R.id.fragmentContainer, new SettingsFragment())
+                .addToBackStack(null)
+                .commit();
     }
 
     // Perform logout
@@ -274,7 +265,7 @@ public class LandingPageActivity extends AppCompatActivity {
 
         transaction.replace(R.id.fragmentContainer, fragment);
         // Only add to back stack if not the home fragment
-        if (!(fragment instanceof HomeFragment)) {
+        if (!(fragment instanceof HomeEmployeeFragment)) {
             transaction.addToBackStack(null);
         }
         transaction.commit();
@@ -291,7 +282,7 @@ public class LandingPageActivity extends AppCompatActivity {
     }
 
     // Helper method for Receive inventory navigation
-    void handleAddProductDetailsNavigation() {
+    private void handleReceiveTodayStockNavigation() {
 
         // Clear BottomNavigationView selection
         clearBottomNavSelection();
@@ -302,26 +293,11 @@ public class LandingPageActivity extends AppCompatActivity {
                         R.anim.fragment_exit,
                         R.anim.fragment_enter,
                         R.anim.fragment_exit)
-                .replace(R.id.fragmentContainer, new ProductDetailsFragment())
+                .replace(R.id.fragmentContainer, new EmployeeReceiveGoodsFragment())
                 .addToBackStack(null)
                 .commit();
     }
-    // Helper method for Receive inventory navigation
-    private void handleReceiveInventoryNavigation() {
 
-        // Clear BottomNavigationView selection
-        clearBottomNavSelection();
-        // Show ReceiveInventoryFragment
-        getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(
-                        R.anim.fragment_enter,
-                        R.anim.fragment_exit,
-                        R.anim.fragment_enter,
-                        R.anim.fragment_exit)
-                .replace(R.id.fragmentContainer, new ReceiveInventoryFragment())
-                .addToBackStack(null)
-                .commit();
-    }
     // Helper method for View Product Details navigation
     public void handleViewProductDetailsNavigation() {
 
@@ -338,38 +314,7 @@ public class LandingPageActivity extends AppCompatActivity {
                 .addToBackStack(null)
                 .commit();
     }
-    // Helper method for View Today's inventory navigation
-    private void handleViewTodayInventoryNavigation() {
 
-        // Clear BottomNavigationView selection
-        clearBottomNavSelection();
-        // Show ReceiveInventoryFragment
-        getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(
-                        R.anim.fragment_enter,
-                        R.anim.fragment_exit,
-                        R.anim.fragment_enter,
-                        R.anim.fragment_exit)
-                .replace(R.id.fragmentContainer, new ViewTodayInventoryFragment())
-                .addToBackStack(null)
-                .commit();
-    }
-    // Helper method for Issue Goods Page navigation
-    private void handleIssueGoodsNavigation() {
-
-        // Clear BottomNavigationView selection
-        clearBottomNavSelection();
-        // Show ReceiveInventoryFragment
-        getSupportFragmentManager().beginTransaction()
-                .setCustomAnimations(
-                        R.anim.fragment_enter,
-                        R.anim.fragment_exit,
-                        R.anim.fragment_enter,
-                        R.anim.fragment_exit)
-                .replace(R.id.fragmentContainer, new IssueGoodsFragment())
-                .addToBackStack(null)
-                .commit();
-    }
 
     // Helper method for Sales Page navigation
     private void handleSalesNavigation() {
@@ -389,8 +334,7 @@ public class LandingPageActivity extends AppCompatActivity {
     }
 
     // Helper method for View Today's Issued Goods navigation
-    private void handleViewIssuedGoodsNavigation() {
-
+    private void handleViewEmployeeStockIssuedGoodsNavigation() {
         // Clear BottomNavigationView selection
         clearBottomNavSelection();
         // Show ReceiveInventoryFragment
@@ -400,7 +344,7 @@ public class LandingPageActivity extends AppCompatActivity {
                         R.anim.fragment_exit,
                         R.anim.fragment_enter,
                         R.anim.fragment_exit)
-                .replace(R.id.fragmentContainer, new ViewIssuedGoodsFragment())
+                .replace(R.id.fragmentContainer, new EmployeeViewStockFragment())
                 .addToBackStack(null)
                 .commit();
     }
@@ -464,6 +408,11 @@ public class LandingPageActivity extends AppCompatActivity {
 
     // .............. END OF HELPER METHODS FOR DRAWER NAVIGATION TRANSITIONING ............
 
+    // Static method to get current user email from anywhere
+    public static String getCurrentUserEmail() {
+        return currentUserEmail;
+    }
+
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
@@ -481,9 +430,9 @@ public class LandingPageActivity extends AppCompatActivity {
             drawerLayout.closeDrawer(GravityCompat.START);
         }
         // If not on HomeFragment, go to HomeFragment
-        else if (!(getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) instanceof HomeFragment)) {
+        else if (!(getSupportFragmentManager().findFragmentById(R.id.fragmentContainer) instanceof HomeEmployeeFragment)) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainer, new HomeFragment())
+                    .replace(R.id.fragmentContainer, new HomeEmployeeFragment())
                     .commit();
         }
         // If already on HomeFragment, minimize app

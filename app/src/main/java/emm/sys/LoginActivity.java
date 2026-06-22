@@ -83,9 +83,20 @@ public class LoginActivity extends AppCompatActivity {
             if (email != null) {
                 Toast.makeText(LoginActivity.this, "Login successful", Toast.LENGTH_SHORT).show();
 
+                //.......... Redirect based on role ..........
+                Intent intent;
+                if (selectedRole.equals("Admin")) {
+                    intent = new Intent(LoginActivity.this, LandingPageActivity.class);
+                } else if (selectedRole.equals("Assignee")) {
+                    intent = new Intent(LoginActivity.this, LandingPageEmployeeActivity.class);
+                } else {
+                    // Default fallback for any other roles
+                    intent = new Intent(LoginActivity.this, LandingPageActivity.class);
+                }
+
                 // Pass email to landing page
-                Intent intent = new Intent(LoginActivity.this, LandingPageActivity.class);
                 intent.putExtra("USER_EMAIL", email);
+                intent.putExtra("USER_ROLE", selectedRole);
                 startActivity(intent);
                 finish();
             } else {

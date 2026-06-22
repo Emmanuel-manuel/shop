@@ -3,7 +3,7 @@
 
     <string-array name="roles_array">
         <item>Admin</item>
-        <item>Employee</item>
+        <item>Assignee</item>
         <!--        <item>Administrator</item>-->
         <!-- Add more roles here -->
     </string-array>
