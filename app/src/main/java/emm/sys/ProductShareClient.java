@@ -42,7 +42,7 @@ public class ProductShareClient {
         }
     }
 
-    public static ShareResponse shareProducts(Context context, List<?> productList) {
+    public static ShareResponse shareData(Context context, List<?> dataList, String dataType) {
         try {
             String receiverIp = resolveReceiverHost(context);
             if (receiverIp == null) {
@@ -54,28 +54,33 @@ public class ProductShareClient {
             String baseUrl = "http://" + receiverIp + ":" + PORT;
             Log.d(TAG, "Targeting receiver at: " + baseUrl);
 
-            // Step 1: Test connection first
             if (!isReachable(receiverIp)) {
                 Log.e(TAG, "Receiver not reachable: " + receiverIp);
                 return new ShareResponse(ShareResult.DATA_TRANSFER_ERROR, 0, 0,
                         "Receiver device not reachable");
             }
 
-            // Step 2: Ping
             boolean pingSuccess = pingReceiver(baseUrl);
             if (!pingSuccess) {
                 return new ShareResponse(ShareResult.DATA_TRANSFER_ERROR, 0, 0,
                         "Receiver app not ready");
             }
 
-            // Step 3: Send data
-            JSONArray json = serializeProducts(productList);
-            return postProducts(baseUrl, json);
+            JSONArray json = serializeData(dataList, dataType);
+            return postData(baseUrl, json);
 
         } catch (Exception e) {
-            Log.e(TAG, "shareProducts failed", e);
+            Log.e(TAG, "shareData failed", e);
             return new ShareResponse(ShareResult.NETWORK_ERROR, 0, 0, e.getMessage());
         }
+    }
+
+    public static ShareResponse shareProducts(Context context, List<?> productList) {
+        return shareData(context, productList, "product");
+    }
+
+    public static ShareResponse shareIssuedGoods(Context context, List<?> issuedGoodsList) {
+        return shareData(context, issuedGoodsList, "issued_goods");
     }
 
     private static boolean isReachable(String ip) {
@@ -100,7 +105,6 @@ public class ProductShareClient {
                 return gateway;
             }
 
-            // Try common hotspot IPs
             String[] commonIps = {"192.168.43.1", "192.168.42.1", "192.168.1.1", "172.20.10.1"};
             for (String ip : commonIps) {
                 if (isReachable(ip)) {
@@ -132,7 +136,6 @@ public class ProductShareClient {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
             conn.setReadTimeout(READ_TIMEOUT_MS);
-            // Don't set any other properties before connect
 
             int code = conn.getResponseCode();
             if (code != 200) {
@@ -163,17 +166,29 @@ public class ProductShareClient {
         }
     }
 
-    private static JSONArray serializeProducts(List<?> productList) throws Exception {
+    private static JSONArray serializeData(List<?> dataList, String dataType) throws Exception {
         JSONArray array = new JSONArray();
-        for (Object obj : productList) {
+        for (Object obj : dataList) {
             JSONObject p = new JSONObject();
-            p.put("product_name",  invokeGetter(obj, "getProductName"));
-            p.put("weight",        invokeGetter(obj, "getWeight"));
-            p.put("flavour",       invokeGetter(obj, "getFlavour"));
-            p.put("buying_price",  invokeGetter(obj, "getBuyingPrice"));
-            p.put("selling_price", invokeGetter(obj, "getSellingPrice"));
-            p.put("profit",        invokeGetter(obj, "getProfit"));
-            p.put("timestamp",     invokeGetter(obj, "getTimestamp"));
+
+            if (dataType.equals("product")) {
+                p.put("product_name", invokeGetter(obj, "getProductName"));
+                p.put("weight", invokeGetter(obj, "getWeight"));
+                p.put("flavour", invokeGetter(obj, "getFlavour"));
+                p.put("buying_price", invokeGetter(obj, "getBuyingPrice"));
+                p.put("selling_price", invokeGetter(obj, "getSellingPrice"));
+                p.put("profit", invokeGetter(obj, "getProfit"));
+                p.put("timestamp", invokeGetter(obj, "getTimestamp"));
+            } else if (dataType.equals("issued_goods")) {
+                p.put("assignee", invokeGetter(obj, "getAssignee"));
+                p.put("product_name", invokeGetter(obj, "getProductName"));
+                p.put("weight", invokeGetter(obj, "getWeight"));
+                p.put("flavour", invokeGetter(obj, "getFlavour"));
+                p.put("quantity", invokeGetter(obj, "getQuantity"));
+                p.put("station", invokeGetter(obj, "getStation"));
+                p.put("timestamp", invokeGetter(obj, "getTimestamp"));
+            }
+
             array.put(p);
         }
         return array;
@@ -183,7 +198,7 @@ public class ProductShareClient {
         return obj.getClass().getMethod(methodName).invoke(obj);
     }
 
-    private static ShareResponse postProducts(String baseUrl, JSONArray json) {
+    private static ShareResponse postData(String baseUrl, JSONArray json) {
         HttpURLConnection conn = null;
         try {
             byte[] body = json.toString().getBytes("UTF-8");
@@ -195,11 +210,9 @@ public class ProductShareClient {
             conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
             conn.setReadTimeout(READ_TIMEOUT_MS);
 
-            // Set headers BEFORE connecting
             conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
             conn.setRequestProperty("Content-Length", String.valueOf(body.length));
 
-            // Now connect and write
             conn.connect();
             OutputStream os = conn.getOutputStream();
             os.write(body);
@@ -227,7 +240,7 @@ public class ProductShareClient {
             }
 
         } catch (Exception e) {
-            Log.e(TAG, "postProducts error", e);
+            Log.e(TAG, "postData error", e);
             return new ShareResponse(ShareResult.NETWORK_ERROR, 0, 0, e.getMessage());
         } finally {
             if (conn != null) {

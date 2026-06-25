@@ -13,6 +13,7 @@ import com.google.android.material.button.MaterialButton;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -82,6 +83,10 @@ public class IssuedGoodsAdapter extends RecyclerView.Adapter<IssuedGoodsAdapter.
     @Override
     public int getItemCount() {
         return issuedGoodsList.size();
+    }
+
+    public List<IssuedGoodsItem> getCurrentList() {
+        return new ArrayList<>(issuedGoodsList);
     }
 
     public void updateList(List<IssuedGoodsItem> newList) {

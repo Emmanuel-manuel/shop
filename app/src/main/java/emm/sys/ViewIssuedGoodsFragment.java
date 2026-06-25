@@ -1,7 +1,9 @@
 package emm.sys;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -9,7 +11,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,7 +20,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdapter.OnItemActionListener {
+
     private RecyclerView goodsRecyclerView;
     private IssuedGoodsAdapter adapter;
     private DBHelper dbHelper;
@@ -36,18 +40,34 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
     private TextView txtTotalIssued, txtTotalQuantity, txtDateRange, txtEmptyMessage;
     private MaterialButton btnDateFilter;
     private View emptyStateView;
-    private com.google.android.material.floatingactionbutton.FloatingActionButton fabRefresh;
+    private FloatingActionButton fabRefresh, fabQuickActions;
+    private TextView serverStatusText;
 
     private String selectedDate = "";
     private SimpleDateFormat displayFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
     private SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+    // Share server
+    private ProductShareServer shareServer;
+    private boolean isDeviceConnected = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_view_issued_goods, container, false);
 
-        // Initialize views
+        initializeViews(view);
+        setupRecyclerView();
+        setupSearchView();
+        setupDateFilter();
+        setupFABs();
+        loadTodayIssuedGoods();
+        startShareServer();
+
+        return view;
+    }
+
+    private void initializeViews(View view) {
         goodsRecyclerView = view.findViewById(R.id.goodsRecyclerView);
         searchView = view.findViewById(R.id.search);
         txtTotalIssued = view.findViewById(R.id.txtTotalIssued);
@@ -57,34 +77,16 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
         btnDateFilter = view.findViewById(R.id.btnDateFilter);
         emptyStateView = view.findViewById(R.id.emptyState);
         fabRefresh = view.findViewById(R.id.fabRefresh);
+        fabQuickActions = view.findViewById(R.id.fabQuickActions);
+        serverStatusText = view.findViewById(R.id.serverStatusText);
 
         dbHelper = new DBHelper(getActivity());
+    }
 
-        // Setup RecyclerView
+    private void setupRecyclerView() {
         goodsRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         adapter = new IssuedGoodsAdapter(new ArrayList<>(), this);
         goodsRecyclerView.setAdapter(adapter);
-
-        // Load today's issued goods by default
-        loadTodayIssuedGoods();
-
-        // Setup search functionality
-        setupSearchView();
-
-        // Setup date filter button
-        btnDateFilter.setOnClickListener(v -> showDatePickerDialog());
-
-        // Setup refresh FAB
-        fabRefresh.setOnClickListener(v -> {
-            fabRefresh.animate().rotationBy(360).setDuration(500).start();
-            if (selectedDate.isEmpty()) {
-                loadTodayIssuedGoods();
-            } else {
-                loadIssuedGoodsByDate(selectedDate);
-            }
-        });
-
-        return view;
     }
 
     private void setupSearchView() {
@@ -103,6 +105,212 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
         });
     }
 
+    private void setupDateFilter() {
+        btnDateFilter.setOnClickListener(v -> showDatePickerDialog());
+    }
+
+    private void setupFABs() {
+        fabRefresh.setOnClickListener(v -> {
+            fabRefresh.animate().rotationBy(360).setDuration(500).start();
+            if (selectedDate.isEmpty()) {
+                loadTodayIssuedGoods();
+            } else {
+                loadIssuedGoodsByDate(selectedDate);
+            }
+        });
+
+        fabQuickActions.setOnClickListener(v -> showQuickActionsMenu());
+    }
+
+    // ---------------------------------------------------------------
+    // Share Server
+    // ---------------------------------------------------------------
+    private void startShareServer() {
+        if (shareServer != null) {
+            updateServerStatusIndicator(isDeviceConnected);
+            return;
+        }
+
+        try {
+            shareServer = new ProductShareServer(requireContext());
+
+            shareServer.setConnectionListener(new ProductShareServer.ConnectionListener() {
+                @Override
+                public void onDeviceConnected() {
+                    isDeviceConnected = true;
+                    requireActivity().runOnUiThread(() -> {
+                        updateServerStatusIndicator(true);
+                        Toast.makeText(getActivity(), "✓ Device connected!", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onDataReceived(int itemCount) {
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getActivity(), "✓ Received " + itemCount + " issued goods record(s)!", Toast.LENGTH_LONG).show();
+                        loadTodayIssuedGoods();
+                    });
+                }
+            });
+
+            shareServer.start();
+            Log.d("ViewIssuedGoods", "Share server started on port " + ProductShareServer.PORT);
+
+            isDeviceConnected = false;
+            updateServerStatusIndicator(false);
+
+            if (isAdded() && getActivity() != null) {
+                Toast.makeText(getActivity(), "Ready to receive issued goods", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e("ViewIssuedGoods", "Could not start share server: " + e.getMessage());
+            shareServer = null;
+            updateServerStatusIndicator(false);
+        }
+    }
+
+    private void updateServerStatusIndicator(boolean isConnected) {
+        if (getView() != null) {
+            TextView statusText = getView().findViewById(R.id.serverStatusText);
+            if (statusText != null) {
+                statusText.setText("🟢");
+                if (isConnected) {
+                    statusText.setTextColor(Color.parseColor("#4CAF50"));
+                } else {
+                    statusText.setTextColor(Color.parseColor("#9E9E9E"));
+                }
+                statusText.setVisibility(View.VISIBLE);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Quick Actions Menu
+    // ---------------------------------------------------------------
+    private void showQuickActionsMenu() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Quick Actions");
+
+        String[] actions = {"Refresh List", "Share Issued Goods", "Check Server Status"};
+
+        builder.setItems(actions, (dialog, which) -> {
+            switch (which) {
+                case 0:
+                    if (selectedDate.isEmpty()) {
+                        loadTodayIssuedGoods();
+                    } else {
+                        loadIssuedGoodsByDate(selectedDate);
+                    }
+                    Toast.makeText(getActivity(), "List refreshed", Toast.LENGTH_SHORT).show();
+                    break;
+                case 1:
+                    initiateShare();
+                    break;
+                case 2:
+                    checkServerStatus();
+                    break;
+            }
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void checkServerStatus() {
+        if (shareServer != null) {
+            Toast.makeText(getActivity(),
+                    "✓ Server is running on port " + ProductShareServer.PORT,
+                    Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getActivity(),
+                    "✗ Server is NOT running",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Share - WiFi transfer for Issued Goods
+    // ---------------------------------------------------------------
+    private void initiateShare() {
+        List<IssuedGoodsItem> currentList = adapter.getCurrentList();
+        if (currentList == null || currentList.isEmpty()) {
+            Toast.makeText(getActivity(), "No issued goods to share", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final List<IssuedGoodsItem> snapshot = new ArrayList<>(currentList);
+
+        AlertDialog progressDialog = new AlertDialog.Builder(getActivity())
+                .setTitle("Sharing Issued Goods")
+                .setMessage("Connecting to nearby device...")
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+        new Thread(() -> {
+            ProductShareClient.ShareResponse response =
+                    ProductShareClient.shareIssuedGoods(requireContext(), snapshot);
+
+            new Handler(Looper.getMainLooper()).post(() -> {
+                progressDialog.dismiss();
+
+                if (response.result == ProductShareClient.ShareResult.SUCCESS) {
+                    String msg = "✓ Transfer complete!\n" + response.inserted + " record(s) sent";
+                    if (response.skipped > 0) {
+                        msg += "\n" + response.skipped + " skipped (already exist)";
+                    }
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Share Successful")
+                            .setMessage(msg)
+                            .setPositiveButton("OK", null)
+                            .show();
+                } else {
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Share Failed")
+                            .setMessage("Could not connect to receiving device.\n\nMake sure:\n1. Both devices have the app open\n2. Receiving device is on this screen\n3. Both are on the same WiFi/Hotspot")
+                            .setPositiveButton("OK", null)
+                            .show();
+                }
+            });
+        }).start();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (shareServer == null) {
+            startShareServer();
+        }
+        if (selectedDate.isEmpty()) {
+            loadTodayIssuedGoods();
+        } else {
+            loadIssuedGoodsByDate(selectedDate);
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (shareServer != null) {
+            shareServer.stop();
+            shareServer = null;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
+        if (shareServer != null) {
+            shareServer.stop();
+        }
+        super.onDestroy();
+    }
+
+    // ---------------------------------------------------------------
+    // Data Loading Methods
+    // ---------------------------------------------------------------
     private void showDatePickerDialog() {
         final Calendar calendar = Calendar.getInstance();
         int year = calendar.get(Calendar.YEAR);
@@ -119,12 +327,11 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
                     String displayDate = displayFormat.format(selectedCalendar.getTime());
 
                     btnDateFilter.setText("📅 " + displayDate);
-                    loadIssuedGoodsByDate(selectedDate); // This now uses the database method
+                    loadIssuedGoodsByDate(selectedDate);
                 },
                 year, month, day
         );
 
-        // Set max date to today
         datePickerDialog.getDatePicker().setMaxDate(System.currentTimeMillis());
         datePickerDialog.show();
     }
@@ -132,21 +339,13 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
     private void loadTodayIssuedGoods() {
         selectedDate = "";
         btnDateFilter.setText("📅 Today");
-        // Get today's date and load data
         String todayDate = dbDateFormat.format(new Date());
         loadIssuedGoodsByDate(todayDate);
     }
 
     private void loadIssuedGoodsByDate(String date) {
         new Thread(() -> {
-            Cursor cursor;
-            if (date.equals("today")) {
-                // Get today's date in yyyy-MM-dd format
-                String todayDate = dbDateFormat.format(new Date());
-                cursor = dbHelper.getIssuedGoodsByDate(todayDate);
-            } else {
-                cursor = dbHelper.getIssuedGoodsByDate(date);
-            }
+            Cursor cursor = dbHelper.getIssuedGoodsByDate(date);
 
             List<IssuedGoodsItem> items = new ArrayList<>();
             int totalItems = 0;
@@ -182,8 +381,6 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
                     }
                 } catch (IllegalArgumentException e) {
                     e.printStackTrace();
-                    // Log the error for debugging
-                    Log.e("DB_ERROR", "Error loading issued goods by date", e);
                 } finally {
                     cursor.close();
                 }
@@ -196,15 +393,10 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
 
             new Handler(Looper.getMainLooper()).post(() -> {
                 adapter.updateList(finalItems);
-
-                // Update statistics
-                txtTotalIssued.setText(String.format(Locale.getDefault(),
-                        "Total: %d items", finalTotalItems));
-                txtTotalQuantity.setText(String.format(Locale.getDefault(),
-                        "Qty: %d pieces", finalTotalQuantity));
+                txtTotalIssued.setText(String.format(Locale.getDefault(), "Total: %d items", finalTotalItems));
+                txtTotalQuantity.setText(String.format(Locale.getDefault(), "Qty: %d pieces", finalTotalQuantity));
                 txtDateRange.setText(displayDate);
 
-                // Show/hide empty state
                 if (finalItems.isEmpty()) {
                     goodsRecyclerView.setVisibility(View.GONE);
                     emptyStateView.setVisibility(View.VISIBLE);
@@ -212,8 +404,6 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
                         txtEmptyMessage.setText("No goods issued today");
                     } else {
                         txtEmptyMessage.setText(String.format("No goods issued on %s", displayDate));
-                        Toast.makeText(getActivity(),
-                                "No data for selected date", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     goodsRecyclerView.setVisibility(View.VISIBLE);
@@ -221,57 +411,6 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
                 }
             });
         }).start();
-    }
-
-    private Cursor filterCursorByDate(Cursor cursor, String targetDate) {
-        if (cursor == null) return null;
-
-        List<Object[]> rows = new ArrayList<>();
-        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-
-        try {
-            int idIndex = cursor.getColumnIndexOrThrow("id");
-            int assigneeIndex = cursor.getColumnIndexOrThrow("assignee");
-            int productNameIndex = cursor.getColumnIndexOrThrow("product_name");
-            int weightIndex = cursor.getColumnIndexOrThrow("weight");
-            int flavourIndex = cursor.getColumnIndexOrThrow("flavour");
-            int quantityIndex = cursor.getColumnIndexOrThrow("quantity");
-            int stationIndex = cursor.getColumnIndexOrThrow("station");
-            int timestampIndex = cursor.getColumnIndexOrThrow("timestamp");
-
-            if (cursor.moveToFirst()) {
-                do {
-                    String timestamp = cursor.getString(timestampIndex);
-                    String itemDate = extractDateFromTimestamp(timestamp);
-
-                    if (itemDate.equals(targetDate)) {
-                        rows.add(new Object[]{
-                                cursor.getInt(idIndex),
-                                cursor.getString(assigneeIndex),
-                                cursor.getString(productNameIndex),
-                                cursor.getString(weightIndex),
-                                cursor.getString(flavourIndex),
-                                cursor.getInt(quantityIndex),
-                                cursor.getString(stationIndex),
-                                timestamp
-                        });
-                    }
-                } while (cursor.moveToNext());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return createMemoryCursor(rows);
-    }
-
-    private String extractDateFromTimestamp(String timestamp) {
-        try {
-            // Assuming timestamp format: "yyyy-MM-dd HH:mm:ss"
-            return timestamp.split(" ")[0];
-        } catch (Exception e) {
-            return "";
-        }
     }
 
     private String formatDateForDisplay(String dateStr) {
@@ -285,17 +424,8 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
 
     private void filterIssuedGoods(String searchText) {
         new Thread(() -> {
-            Cursor cursor;
-            String targetDate;
-
-            if (selectedDate.isEmpty()) {
-                // Get today's date
-                targetDate = dbDateFormat.format(new Date());
-            } else {
-                targetDate = selectedDate;
-            }
-
-            cursor = dbHelper.getIssuedGoodsByDate(targetDate);
+            String targetDate = selectedDate.isEmpty() ? dbDateFormat.format(new Date()) : selectedDate;
+            Cursor cursor = dbHelper.getIssuedGoodsByDate(targetDate);
 
             List<IssuedGoodsItem> filteredList = new ArrayList<>();
 
@@ -318,7 +448,6 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
                             String flavour = cursor.getString(flavourIndex);
                             String weight = cursor.getString(weightIndex);
 
-                            // Search in multiple fields
                             if (assignee.toLowerCase().contains(searchText.toLowerCase()) ||
                                     productName.toLowerCase().contains(searchText.toLowerCase()) ||
                                     station.toLowerCase().contains(searchText.toLowerCase()) ||
@@ -348,19 +477,6 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
             final List<IssuedGoodsItem> finalFilteredList = filteredList;
             new Handler(Looper.getMainLooper()).post(() -> {
                 adapter.updateList(finalFilteredList);
-
-                if (!searchText.isEmpty()) {
-                    txtTotalIssued.setText(String.format(Locale.getDefault(),
-                            "Found: %d items", finalFilteredList.size()));
-                } else {
-                    // Reload data without filter
-                    if (selectedDate.isEmpty()) {
-                        loadTodayIssuedGoods();
-                    } else {
-                        loadIssuedGoodsByDate(selectedDate);
-                    }
-                }
-
                 if (finalFilteredList.isEmpty() && !searchText.isEmpty()) {
                     Toast.makeText(getActivity(),
                             "No results found for: \"" + searchText + "\"",
@@ -370,19 +486,9 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
         }).start();
     }
 
-    // Helper method to create in-memory cursor
-    private android.database.MatrixCursor createMemoryCursor(List<Object[]> rows) {
-        String[] columns = {"id", "assignee", "product_name", "weight", "flavour",
-                "quantity", "station", "timestamp"};
-        android.database.MatrixCursor cursor = new android.database.MatrixCursor(columns);
-
-        for (Object[] row : rows) {
-            cursor.addRow(row);
-        }
-
-        return cursor;
-    }
-
+    // ---------------------------------------------------------------
+    // Item Actions
+    // ---------------------------------------------------------------
     @Override
     public void onEditClicked(IssuedGoodsItem item) {
         Bundle bundle = new Bundle();
@@ -410,21 +516,15 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
     }
 
     private void showDeleteConfirmationDialog(IssuedGoodsItem item) {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Delete Issued Goods");
         builder.setMessage("Are you sure you want to delete this issued goods record?\n\n" +
                 "Product: " + item.getProductName() + "\n" +
                 "Assignee: " + item.getAssignee() + "\n" +
                 "Quantity: " + item.getQuantity() + " pieces");
 
-        builder.setPositiveButton("Delete", (dialog, which) -> {
-            deleteIssuedGoods(item);
-        });
-
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            dialog.dismiss();
-        });
-
+        builder.setPositiveButton("Delete", (dialog, which) -> deleteIssuedGoods(item));
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 
@@ -441,23 +541,5 @@ public class ViewIssuedGoodsFragment extends Fragment implements IssuedGoodsAdap
         } else {
             Toast.makeText(getActivity(), "Failed to delete issued goods", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (selectedDate.isEmpty()) {
-            loadTodayIssuedGoods();
-        } else {
-            loadIssuedGoodsByDate(selectedDate);
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        if (dbHelper != null) {
-            dbHelper.close();
-        }
-        super.onDestroy();
     }
 }
