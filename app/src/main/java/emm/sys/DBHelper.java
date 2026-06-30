@@ -24,7 +24,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
 
-        super(context, "Shop.db", null, 10);
+        super(context, "Shop.db", null, 11);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "buying_price INTEGER," +
                 "selling_price INTEGER," +
                 "profit INTEGER," + // Adds profit column
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
 
         // Create inventory table
         db.execSQL("CREATE TABLE inventory(" +
@@ -53,7 +53,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "flavour TEXT," +
                 "quantity INTEGER," +
                 "balance INTEGER,"+
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
 
         // Create issue_goods table
         db.execSQL("CREATE TABLE issue_goods(" +
@@ -64,7 +64,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "flavour TEXT," +
                 "quantity INTEGER," +
                 "station TEXT," +
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
 
 
         // Create sales table
@@ -78,7 +78,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "bill INTEGER," +
                 "payment_mode TEXT," +
                 "total_bill INTEGER," +
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
 
         // Create to_pay table
         db.execSQL("CREATE TABLE to_pay(" +
@@ -92,7 +92,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "payment_mode TEXT," +
                 "total_bill INTEGER," +
                 "balance INTEGER," +
-                "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
 
         // Create notes table
         db.execSQL("CREATE TABLE notes(" +
@@ -100,6 +100,17 @@ public class DBHelper extends SQLiteOpenHelper {
                            "title     TEXT," +
                            "content   TEXT," +
                            "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");  // Changed to localtime
+
+        // Create emp_received_goods table
+        db.execSQL("CREATE TABLE emp_received_goods(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "assignee TEXT," +
+                "product_name TEXT," +
+                "weight TEXT," +
+                "flavour TEXT," +
+                "quantity INTEGER," +
+                "station TEXT," +
+                "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
 
 
     }
@@ -193,7 +204,20 @@ public class DBHelper extends SQLiteOpenHelper {
                            "title     TEXT," +
                            "content   TEXT," +
                            "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");  // Changed to localtime
-               }
+        }
+
+        if (oldVersion < 11) {
+            // Create emp_received_goods table
+            db.execSQL("CREATE TABLE IF NOT EXISTS emp_received_goods(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "assignee TEXT," +
+                    "product_name TEXT," +
+                    "weight TEXT," +
+                    "flavour TEXT," +
+                    "quantity INTEGER," +
+                    "station TEXT," +
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        }
 
     }
 
@@ -238,12 +262,10 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-
-
-
-
-
     // ++++++++++++++++++++  END OF USERS RELATED METHODS +++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
 
     // ++++++++++++++++++++ GENESIS OF PRODUCT RELATED METHODS +++++++++++++++++++++++++++++++++++++++++++++++++++++
     // ============ Method to insert product details ============
@@ -329,6 +351,39 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
+    // ============ Method to get all product names from product_details table ============
+    public List<String> getAllProductNamesFromProductDetails() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> productNames = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT product_name FROM product_details ORDER BY product_name",
+                null
+        );
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(0);
+                if (name != null && !name.trim().isEmpty()) {
+                    productNames.add(name);
+                }
+            }
+            cursor.close();
+        }
+
+        return productNames;
+    }
+
+    // ============ Method to get product details (weight, flavour) from product_details ============
+    public Cursor getProductDetailsFromProductDetails(String productName) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT weight, flavour FROM product_details WHERE product_name = ? LIMIT 1",
+                new String[]{productName}
+        );
+    }
+
+
     // Optional: Added this method in-case programmer wants to check product existence at any time
     public boolean productExistsAnyTime(String productName) {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -395,17 +450,10 @@ public class DBHelper extends SQLiteOpenHelper {
 
 
 
-
-
-
-
-
-
-
-
-
-
     // +++++++++++++++++++++ END OF PRODUCT RELATED METHODS +++++++++++++++++++++++++++++++++++++++++++
+
+
+
 
     // +++++++++++++++++++++ GENESIS OF INVENTORY RELATED METHODS ++++++++++++++++++++++++++++++++++++++++++++++++
     // ============ Updated method to insert inventory data - sets balance = quantity ============
@@ -690,17 +738,11 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-
-
-
-
-
-
-
-
-
-
     // ++++++++++++++++++ END OF INVENTORY RELATED METHODS +++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
 
     // ++++++++++++++++++ GENESIS OF ISSUED GOODS METHODS ++++++++++++++++++++++++++++++++++++++++++++++++
     // ========= Updated method to insert issued goods and update inventory balance ======
@@ -951,16 +993,119 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
 
-
-
-
-
-
-
-
     // ++++++++++++++++ END OF ISSUED GOODS RELATED METHODS ++++++++++++++++++++++++++++++++++++++++++++
 
 
+
+
+// ============ GENESIS OF EMPLOYEE RECEIVED GOODS METHODS ============
+
+    // Insert employee received goods
+    public boolean insertEmployeeReceivedGoods(String assignee, String productName, String weight,
+                                               String flavour, int quantity, String station) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("assignee", assignee);
+        values.put("product_name", productName);
+        values.put("weight", weight);
+        values.put("flavour", flavour);
+        values.put("quantity", quantity);
+        values.put("station", station);
+
+        long result = db.insert("emp_received_goods", null, values);
+        return result != -1;
+    }
+
+    // Get all employee received goods
+    public Cursor getAllEmployeeReceivedGoods() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM emp_received_goods ORDER BY timestamp DESC", null);
+    }
+
+    // Get employee received goods by date
+    public Cursor getEmployeeReceivedGoodsByDate(String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM emp_received_goods WHERE date(timestamp) = ? ORDER BY timestamp DESC",
+                new String[]{date});
+    }
+
+    // Get employee received goods by assignee
+    public Cursor getEmployeeReceivedGoodsByAssignee(String assignee) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM emp_received_goods WHERE assignee = ? ORDER BY timestamp DESC",
+                new String[]{assignee});
+    }
+
+    // Get employee received goods by assignee and date
+    public Cursor getEmployeeReceivedGoodsByAssigneeAndDate(String assignee, String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM emp_received_goods WHERE assignee = ? AND date(timestamp) = ? ORDER BY timestamp DESC",
+                new String[]{assignee, date});
+    }
+
+    // Delete employee received goods
+    public boolean deleteEmployeeReceivedGoods(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int rowsAffected = db.delete("emp_received_goods", "id = ?", new String[]{String.valueOf(id)});
+        return rowsAffected > 0;
+    }
+
+    // Update employee received goods
+    public boolean updateEmployeeReceivedGoods(int id, String assignee, String productName, String weight,
+                                               String flavour, int quantity, String station) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("assignee", assignee);
+        values.put("product_name", productName);
+        values.put("weight", weight);
+        values.put("flavour", flavour);
+        values.put("quantity", quantity);
+        values.put("station", station);
+
+        int rowsAffected = db.update("emp_received_goods", values, "id = ?", new String[]{String.valueOf(id)});
+        return rowsAffected > 0;
+    }
+
+    // Get total quantity received by employee today
+    public int getTodayEmployeeReceivedTotal(String assignee) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        int total = 0;
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayDate = dateFormat.format(new Date());
+
+        Cursor cursor = db.rawQuery(
+                "SELECT COALESCE(SUM(quantity), 0) FROM emp_received_goods WHERE assignee = ? AND date(timestamp) = ?",
+                new String[]{assignee, todayDate}
+        );
+
+        if (cursor.moveToFirst()) {
+            total = cursor.getInt(0);
+        }
+        cursor.close();
+        return total;
+    }
+
+    // Get all unique assignees (employees) who have received goods
+    public List<String> getAllEmployeeAssignees() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<String> assignees = new ArrayList<>();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT DISTINCT assignee FROM emp_received_goods ORDER BY assignee",
+                null
+        );
+
+        while (cursor.moveToNext()) {
+            assignees.add(cursor.getString(0));
+        }
+        cursor.close();
+
+        return assignees;
+    }
+
+
+    // ============ END OF EMPLOYEE RECEIVED GOODS METHODS =====================
 
 
 
@@ -1343,8 +1488,170 @@ public boolean insertNote(String title, String content) {
         return notes;
     }
 
+    // ==================== END OF NOTEPAD AND NOTES METHODS ==========
 
 
+
+
+
+
+
+
+    // ======================= EXPENSE MANAGEMENT METHODS ============
+
+    // Create expenses table
+    public void createExpensesTable(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS expenses(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "category TEXT," +
+                "amount REAL," +
+                "date TEXT," +
+                "notes TEXT," +
+                "timestamp DATETIME DEFAULT (datetime('now', 'localtime')))");
+    }
+
+    // Insert expense
+    public boolean insertExpense(String category, double amount, String date, String notes) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("category", category);
+        values.put("amount", amount);
+        values.put("date", date);
+        values.put("notes", notes);
+
+        long result = db.insert("expenses", null, values);
+        return result != -1;
+    }
+
+    // Get expenses by date
+    public Cursor getExpensesByDate(String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM expenses WHERE date = ? ORDER BY timestamp DESC",
+                new String[]{date});
+    }
+
+    // Get expenses by date range
+    public Cursor getExpensesByDateRange(String startDate, String endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM expenses WHERE date BETWEEN ? AND ? ORDER BY timestamp DESC",
+                new String[]{startDate, endDate});
+    }
+
+    // Get total expenses by date
+    public double getTotalExpensesByDate(String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        double total = 0;
+        Cursor cursor = db.rawQuery("SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE date = ?",
+                new String[]{date});
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        cursor.close();
+        return total;
+    }
+
+    // Get total expenses by date range
+    public double getTotalExpensesByDateRange(String startDate, String endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        double total = 0;
+        Cursor cursor = db.rawQuery("SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE date BETWEEN ? AND ?",
+                new String[]{startDate, endDate});
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        cursor.close();
+        return total;
+    }
+
+    // Delete expense
+    public boolean deleteExpense(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        int rows = db.delete("expenses", "id = ?", new String[]{String.valueOf(id)});
+        return rows > 0;
+    }
+
+// ============ FINANCIAL SUMMARY METHODS ============
+
+    /**
+     * Get financial summary for a date range
+     * @param startDate Start date in yyyy-MM-dd format
+     * @param endDate End date in yyyy-MM-dd format
+     * @return Cursor with columns: total_revenue, total_profit, total_expenses
+     */
+
+    // Get financial summary for a date range
+    public Cursor getFinancialSummary(String startDate, String endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Using table aliases 's' for sales and 'p' for product_details
+        // to avoid ambiguous column name errors
+        String query =
+                "SELECT " +
+                        // Total Revenue from sales
+                        "COALESCE((SELECT SUM(total_bill) FROM sales WHERE date(timestamp) BETWEEN ? AND ?), 0) as total_revenue, " +
+                        // Total Profit = (selling_price - buying_price) * quantity
+                        "COALESCE((SELECT SUM((s.selling_price - p.buying_price) * s.quantity) " +
+                        "FROM sales s JOIN product_details p ON s.product_name = p.product_name " +
+                        "WHERE date(s.timestamp) BETWEEN ? AND ?), 0) as total_profit, " +
+                        // Total Expenses from expenses table
+                        "COALESCE((SELECT SUM(amount) FROM expenses WHERE date BETWEEN ? AND ?), 0) as total_expenses";
+
+        return db.rawQuery(query, new String[]{startDate, endDate, startDate, endDate, startDate, endDate});
+    }
+
+    // Get top selling products
+    public Cursor getTopSellingProducts(String startDate, String endDate, int limit) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT s.product_name, SUM(s.quantity) as total_quantity, SUM(s.total_bill) as total_revenue " +
+                        "FROM sales s WHERE date(s.timestamp) BETWEEN ? AND ? " +
+                        "GROUP BY s.product_name " +
+                        "ORDER BY total_revenue DESC LIMIT ?",
+                new String[]{startDate, endDate, String.valueOf(limit)}
+        );
+    }
+
+    // Get top performing assignees (employees)
+    public Cursor getTopAssignees(String startDate, String endDate, int limit) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT ig.assignee, COUNT(*) as total_transactions, SUM(ig.quantity) as total_quantity " +
+                        "FROM issue_goods ig WHERE date(ig.timestamp) BETWEEN ? AND ? " +
+                        "GROUP BY ig.assignee " +
+                        "ORDER BY total_quantity DESC LIMIT ?",
+                new String[]{startDate, endDate, String.valueOf(limit)}
+        );
+    }
+
+    // Get daily sales summary
+    public Cursor getDailySalesSummary(String date) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT " +
+                        "COUNT(*) as transaction_count, " +
+                        "SUM(total_bill) as total_revenue, " +
+                        "AVG(total_bill) as avg_transaction " +
+                        "FROM sales WHERE date(timestamp) = ?",
+                new String[]{date}
+        );
+    }
+
+    // Get weekly sales summary
+    public Cursor getWeeklySalesSummary(String startDate, String endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery(
+                "SELECT " +
+                        "COUNT(*) as transaction_count, " +
+                        "SUM(total_bill) as total_revenue, " +
+                        "AVG(total_bill) as avg_transaction, " +
+                        "strftime('%w', timestamp) as day_of_week " +
+                        "FROM sales WHERE date(timestamp) BETWEEN ? AND ? " +
+                        "GROUP BY day_of_week",
+                new String[]{startDate, endDate}
+        );
+    }
+
+// ======================= END OF EXPENSE MANAGEMENT METHODS ============
 
 
 

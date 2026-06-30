@@ -26,18 +26,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="1dp"
+                android:gravity="center">
 
-                <TextView
-                    android:id="@+id/txtHeader"
+                <!-- First Row: Header Title and Date Filter -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="📦 TODAY'S INVENTORY"
-                    android:textStyle="bold"
-                    android:textSize="22sp"
-                    android:textColor="@color/primary"
-                    android:gravity="center"
-                    android:layout_marginBottom="6dp"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📦 VIEW RECEIVED GOODS"
+                        android:textSize="21sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/primary"
+                        android:gravity="start"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnDateFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="📅 Today"
+                        android:textSize="12sp"
+                        app:icon="@drawable/ic_calendar"
+                        app:iconSize="16dp"
+                        app:iconPadding="4dp"
+                        app:cornerRadius="8dp"
+                        app:strokeColor="@color/primary"
+                        app:strokeWidth="1dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
@@ -54,6 +75,7 @@
                     android:layout_gravity="center"
                     android:layout_marginTop="10dp"/>
             </LinearLayout>
+
         </androidx.cardview.widget.CardView>
 
         <!-- Search Card -->
@@ -174,7 +196,7 @@
 
                 <!-- RecyclerView -->
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/userRecyclerView"
+                    android:id="@+id/inventoryRecyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"

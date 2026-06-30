@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".FinanceFragment"
+    android:orientation="vertical"
+    android:background="@color/background"
+    android:padding="8dp">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
+
+            <!-- Header Card with Date Filter -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/primary">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="💰 FINANCE"
+                                android:textSize="20sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/white"/>
+
+                            <TextView
+                                android:id="@+id/txtDateRange"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Today"
+                                android:textSize="14sp"
+                                android:textColor="@color/white"
+                                android:alpha="0.8"/>
+                        </LinearLayout>
+
+                        <!-- Report Type Spinner -->
+                        <Spinner
+                            android:id="@+id/spinnerReportType"
+                            android:layout_width="120dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/spinner_white"
+                            android:layout_marginEnd="8dp"/>
+
+                        <!-- Date Filter Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnDateFilter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:text="📅 Today"
+                            android:textColor="@color/white"
+                            android:backgroundTint="@color/primary_dark"
+                            app:cornerRadius="20dp"
+                            app:icon="@drawable/ic_calendar"
+                            app:iconGravity="textStart"
+                            app:iconTint="@color/white"
+                            android:textSize="12sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Summary Cards Grid -->
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:rowCount="2"
+                android:layout_marginBottom="12dp">
+
+                <!-- Total Revenue Card -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_revenue"
+                            app:tint="@color/chart_green"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Revenue"
+                            android:textSize="12sp"
+                            android:textColor="@color/on_surface_variant"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/txtTotalRevenue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="KES 0"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/chart_green"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Total Profit Card -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_profit"
+                            app:tint="@color/chart_blue"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Profit"
+                            android:textSize="12sp"
+                            android:textColor="@color/on_surface_variant"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/txtTotalProfit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="KES 0"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/chart_blue"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Total Expenses Card -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_expense"
+                            app:tint="@color/chart_red"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Expenses"
+                            android:textSize="12sp"
+                            android:textColor="@color/on_surface_variant"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/txtTotalExpenses"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="KES 0"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/chart_red"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Net Cash Flow Card -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:gravity="center">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_cash_flow"
+                            app:tint="@color/chart_orange"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cash Flow"
+                            android:textSize="12sp"
+                            android:textColor="@color/on_surface_variant"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/txtNetCashFlow"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="KES 0"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/chart_orange"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </GridLayout>
+
+            <!-- Expenses Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📋 Daily Expenses"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/on_surface"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddExpense"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:text="+ Add"
+                            android:textSize="12sp"
+                            android:backgroundTint="@color/primary"
+                            app:cornerRadius="16dp"
+                            android:textColor="@color/white"/>
+                    </LinearLayout>
+
+                    <!-- Expense Input Row -->
+                    <LinearLayout
+                        android:id="@+id/expenseInputRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        android:layout_marginBottom="12dp">
+
+                        <EditText
+                            android:id="@+id/txtExpenseCategory"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:hint="Category"
+                            android:background="@drawable/edittext_bg"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="12sp"
+                            android:layout_marginEnd="4dp"/>
+
+                        <EditText
+                            android:id="@+id/txtExpenseAmount"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:hint="Amount"
+                            android:inputType="numberDecimal"
+                            android:background="@drawable/edittext_bg"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="12sp"
+                            android:layout_marginEnd="4dp"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSaveExpense"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:text="Save"
+                            android:textSize="12sp"
+                            android:backgroundTint="@color/chart_green"
+                            app:cornerRadius="8dp"
+                            android:textColor="@color/white"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCancelExpense"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:text="Cancel"
+                            android:textSize="12sp"
+                            android:backgroundTint="@color/chart_red"
+                            app:cornerRadius="8dp"
+                            android:textColor="@color/white"
+                            android:layout_marginStart="4dp"/>
+                    </LinearLayout>
+
+                    <!-- Expense List -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/expenseRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Sales Summary Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📊 Sales Summary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="12dp"/>
+
+                    <!-- Top Products -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Top Selling Products"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="8dp"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/topProductsRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:layout_marginBottom="12dp"/>
+
+                    <!-- Top Assignees -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Top Performing Assignees"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="8dp"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/topAssigneesRecyclerView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Action Buttons -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📄 Reports"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="12dp"/>
+
+                    <GridLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="2"
+                        android:rowCount="2">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnGeneratePDF"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_columnWeight="1"
+                            android:layout_margin="4dp"
+                            android:text="📄 PDF Report"
+                            android:textSize="13sp"
+                            android:backgroundTint="@color/chart_red"
+                            app:cornerRadius="8dp"
+                            android:textColor="@color/white"
+                            app:icon="@drawable/ic_pdf"
+                            app:iconGravity="textStart"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnGenerateCSV"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_columnWeight="1"
+                            android:layout_margin="4dp"
+                            android:text="📊 CSV Export"
+                            android:textSize="13sp"
+                            android:backgroundTint="@color/chart_green"
+                            app:cornerRadius="8dp"
+                            android:textColor="@color/white"
+                            app:icon="@drawable/ic_csv"
+                            app:iconGravity="textStart"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnEmailReport"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_columnWeight="1"
+                            android:layout_margin="4dp"
+                            android:text="✉️ Email Report"
+                            android:textSize="13sp"
+                            android:backgroundTint="@color/chart_blue"
+                            app:cornerRadius="8dp"
+                            android:textColor="@color/white"
+                            app:icon="@drawable/ic_email"
+                            app:iconGravity="textStart"/>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnRefresh"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_columnWeight="1"
+                            android:layout_margin="4dp"
+                            android:text="🔄 Refresh"
+                            android:textSize="13sp"
+                            android:backgroundTint="@color/chart_orange"
+                            app:cornerRadius="8dp"
+                            android:textColor="@color/white"
+                            app:icon="@drawable/ic_refresh"
+                            app:iconGravity="textStart"/>
+                    </GridLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

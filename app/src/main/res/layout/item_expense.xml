@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:gravity="center_vertical"
+    android:background="@drawable/item_bg">
+
+    <TextView
+        android:id="@+id/txtExpenseCategory"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Category"
+        android:textSize="14sp"
+        android:textColor="@color/on_surface"
+        android:maxLines="1"/>
+
+    <TextView
+        android:id="@+id/txtExpenseAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="KES 0"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/chart_red"
+        android:layout_marginEnd="8dp"/>
+
+    <TextView
+        android:id="@+id/txtExpenseDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Date"
+        android:textSize="12sp"
+        android:textColor="@color/on_surface_variant"
+        android:layout_marginEnd="8dp"/>
+
+    <TextView
+        android:id="@+id/btnDeleteExpense"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:text="🗑️"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"/>
+</LinearLayout>

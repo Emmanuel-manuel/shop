@@ -174,8 +174,8 @@ public class LandingPageActivity extends AppCompatActivity {
                 case R.id.to_pay:
                     replaceFragment(new ToPayFragment());
                     break;
-                case R.id.announcements:
-                    replaceFragment(new AnnouncementFragment());
+                case R.id.finance:
+                    replaceFragment(new FinanceFragment());
                     break;
             }
             return true;

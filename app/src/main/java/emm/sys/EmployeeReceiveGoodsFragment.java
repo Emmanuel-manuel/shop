@@ -13,7 +13,9 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.fragment.app.Fragment;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,27 +90,21 @@ public class EmployeeReceiveGoodsFragment extends Fragment {
     }
 
     private void setupProductSpinner() {
-        // Get products with available balance from inventory
-        List<String> availableProducts = dbHelper.getProductsWithAvailableBalance();
+        // Get products from product_details table
+        List<String> productNames = dbHelper.getAllProductNamesFromProductDetails();
 
-        if (availableProducts.isEmpty()) {
-            // Check if there are any products in inventory at all
-            List<String> allProducts = dbHelper.getAllProductNames();
-            if (allProducts.isEmpty()) {
-                availableProducts.add("No products in inventory");
-            } else {
-                availableProducts.add("Select Product");
-            }
+        if (productNames.isEmpty()) {
+            productNames.add("No products available");
         } else {
             // Add "Select Product" as first item
-            availableProducts.add(0, "Select Product");
+            productNames.add(0, "Select Product");
         }
 
         // Create adapter
         ArrayAdapter<String> productAdapter = new ArrayAdapter<>(
                 getActivity(),
                 android.R.layout.simple_spinner_item,
-                availableProducts
+                productNames
         );
         productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerProduct.setAdapter(productAdapter);
@@ -121,10 +117,10 @@ public class EmployeeReceiveGoodsFragment extends Fragment {
                 String selectedProduct = parent.getItemAtPosition(position).toString();
 
                 if (!selectedProduct.equals("Select Product") &&
-                        !selectedProduct.equals("No products in inventory")) {
+                        !selectedProduct.equals("No products available")) {
 
-                    // Get product details from inventory
-                    Cursor cursor = dbHelper.getInventoryProductDetails(selectedProduct);
+                    // Get product details from product_details table
+                    Cursor cursor = dbHelper.getProductDetailsFromProductDetails(selectedProduct);
 
                     if (cursor != null && cursor.moveToFirst()) {
                         try {
@@ -150,6 +146,10 @@ public class EmployeeReceiveGoodsFragment extends Fragment {
                         } finally {
                             cursor.close();
                         }
+                    } else {
+                        // If product not found in product_details, reset spinners
+                        spinnerWeight.setSelection(0);
+                        spinnerFlavour.setSelection(0);
                     }
 
                     txtProductName.setText(selectedProduct);
@@ -213,7 +213,7 @@ public class EmployeeReceiveGoodsFragment extends Fragment {
             // Get the current balance (which equals quantity for new receipt)
             int newBalance = dbHelper.getSpecificProductBalance(productName, weight, flavour);
 
-            // Also insert into issue_goods table with employee's email as assignee
+            // Insert into issue_goods table with employee's email as assignee
             boolean issuedInserted = dbHelper.insertIssuedGoods(
                     assigneeEmail,    // Assignee is the logged-in employee's email
                     productName,
@@ -224,17 +224,30 @@ public class EmployeeReceiveGoodsFragment extends Fragment {
                     newBalance
             );
 
-            if (issuedInserted) {
-                String message = "Stock received and assigned to you successfully!\n" +
+            // *** NEW: Insert into emp_received_goods table ***
+            boolean empReceivedInserted = dbHelper.insertEmployeeReceivedGoods(
+                    assigneeEmail,    // Assignee is the logged-in employee's email
+                    productName,
+                    weight,
+                    flavour,
+                    quantity,
+                    station
+            );
+
+            if (issuedInserted && empReceivedInserted) {
+                String message = "✓ Stock received and recorded successfully!\n" +
                         "Product: " + productName + "\n" +
                         "Quantity: " + quantity + "\n" +
-                        "Station: " + station;
+                        "Station: " + station + "\n" +
+                        "Assignee: " + assigneeEmail;
                 Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
                 clearForm();
                 // Refresh product spinner
                 setupProductSpinner();
+            } else if (issuedInserted) {
+                Toast.makeText(getActivity(), "Stock saved but failed to record issuance in one table", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(getActivity(), "Stock saved but failed to record issuance", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Failed to record issuance", Toast.LENGTH_SHORT).show();
             }
         } else {
             Toast.makeText(getActivity(), "Failed to receive stock", Toast.LENGTH_SHORT).show();
@@ -244,7 +257,7 @@ public class EmployeeReceiveGoodsFragment extends Fragment {
     private boolean validateInputs(String productName, String weight,
                                    String flavour, String quantityStr, String station) {
         if (productName.isEmpty() || productName.equals("Select Product") ||
-                productName.equals("No products in inventory")) {
+                productName.equals("No products available")) {
             txtProductName.setError("Product name is required");
             Toast.makeText(getActivity(), "Please enter or select a Product", Toast.LENGTH_SHORT).show();
             txtProductName.requestFocus();

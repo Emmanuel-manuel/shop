@@ -30,17 +30,17 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="24dp"
+                    android:padding="1dp"
                     android:gravity="center">
 
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📦 RECEIVE TODAY'S STOCK"
-                        android:textSize="22sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/primary"
-                        android:gravity="center"/>
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📦 RECEIVE TODAY'S PRODUCTS"
+                            android:textSize="22sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/primary"
+                            android:gravity="start"/>
 
                     <TextView
                         android:layout_width="wrap_content"

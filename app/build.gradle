@@ -46,6 +46,12 @@ dependencies {
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
 
     implementation 'androidx.cardview:cardview:1.0.0'
+
+    // iTextPDF for PDF generation
+    implementation 'com.itextpdf:itext7-core:7.2.5'
+    // Or use the community version (GPL)
+    implementation 'com.itextpdf:itextg:5.5.10'
+
     // LINE is primarily for charts
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
